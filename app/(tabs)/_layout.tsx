@@ -35,6 +35,7 @@ export default function LayoutAbas() {
                 name="missoes"
                 options={{
                     title: "Missões",
+                    headerShown: false,
                     tabBarIcon: ({ color, size }) => <Ionicons color={color} name="flag-outline" size={size} />,
                 }}
             />

@@ -64,3 +64,24 @@ export type MissaoCatalogo = {
     pontoRecompensa: number;
     sistema: boolean;
 };
+
+export type MissaoConsumidor = {
+    id: number;
+    missaoId: number;
+    consumidorId: number;
+    chavePeriodo: string;
+    dataCriacao: string;
+    dataAtualizacao: string;
+    nomeMissao?: string | null;
+    pontoRecompensa?: number | null;
+};
+
+export type MissaoDisponivel = MissaoCatalogo & {
+    lojistaId: number;
+    nomeLoja: string;
+};
+
+export type RespostaConclusaoMissao = {
+    missaoConsumidor: MissaoConsumidor;
+    consumidor: PerfilConsumidorAtual["consumidor"];
+};

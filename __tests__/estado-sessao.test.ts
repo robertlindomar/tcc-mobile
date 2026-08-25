@@ -8,7 +8,7 @@ const perfil: PerfilConsumidorAtual = {
     usuario: {
         id: 1,
         nome: "Bruno Lima",
-        email: "cliente2@demo.local",
+        email: "usuario2@gmail.com",
         role: "CONSUMIDOR",
         ativo: true,
         dataCriacao: "2026-08-17T20:00:00.000Z",

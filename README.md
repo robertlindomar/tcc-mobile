@@ -69,7 +69,7 @@ docker run --rm -p 3000:3000 conecta-mobile-web
 | `EXPO_PUBLIC_API_URL` | **sim** | URL pública da API (ex.: backend na VPS) |
 | `PORT` | não | `3000` |
 
-A API precisa estar acessível pelo browser (CORS já liberado no backend). Conta demo: `cliente2@demo.local` / `senha123`.
+A API precisa estar acessível pelo browser (CORS já liberado no backend). Conta demo: `usuario2@gmail.com` / `senha123`.
 
 ## Executar (Expo Go)
 
@@ -93,7 +93,7 @@ npx expo-doctor
 
 Após executar `npm run db:demo:reset` no backend, entre com:
 
-- E-mail: `cliente2@demo.local`
+- E-mail: `usuario2@gmail.com`
 - Senha: `senha123`
 
 O fluxo esperado é: abrir sem sessão, entrar, visualizar 200 pontos e nível retornados pela API, fechar e reabrir preservando a sessão, consultar o perfil real, sair e confirmar que o próximo início permanece deslogado. Também valide o cadastro de um novo consumidor sem qualquer seleção de loja.
