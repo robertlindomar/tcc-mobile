@@ -28,8 +28,10 @@ function mensagemHttp(status?: number, mensagemApi?: string): string {
         "CEP nao encontrado": "Não encontramos esse CEP.",
         "Usuario inativo. Contate o administrador.":
             "Sua conta está inativa. Entre em contato com a administração.",
-        "Este aplicativo e destinado aos consumidores":
-            "Este aplicativo é destinado aos consumidores.",
+        "Pontos insuficientes": "Você não tem pontos suficientes.",
+        "Recompensa esgotada": "Esta recompensa está esgotada.",
+        "Recompensa expirada": "Esta recompensa expirou.",
+        "Recompensa nao disponivel": "Esta recompensa não está disponível.",
     };
 
     return mensagensConhecidas[mensagemApi ?? ""] ?? "Não foi possível concluir a operação. Tente novamente.";

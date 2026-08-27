@@ -19,13 +19,25 @@ import { buscarLojaCatalogo } from "@/features/lojas/servicoLoja";
 import { listarMissoesCatalogo } from "@/features/missoes/servicoCatalogoMissao";
 import { listarOfertasCatalogo } from "@/features/lojas/servicoOferta";
 import { listarProdutosCatalogo } from "@/features/lojas/servicoProduto";
+import { CartaoRecompensa } from "@/features/recompensas/components/CartaoRecompensa";
+import { ModalConfirmarResgate } from "@/features/recompensas/components/ModalConfirmarResgate";
+import { filtrarRecompensasPorLoja } from "@/features/recompensas/regrasRecompensa";
+import { obterCatalogoRecompensas } from "@/features/recompensas/servicoRecompensa";
+import { useResgateRecompensa } from "@/features/recompensas/useResgateRecompensa";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
-import { LojaCatalogoDetalhe, MissaoCatalogo, OfertaCatalogo, ProdutoCatalogo } from "@/types/api";
+import {
+    LojaCatalogoDetalhe,
+    MissaoCatalogo,
+    OfertaCatalogo,
+    ProdutoCatalogo,
+    RecompensaCatalogo,
+} from "@/types/api";
 import { formatarDataCivil } from "@/utils/formatarDataCivil";
 
 const LIMITE_OFERTAS = 2;
 const LIMITE_MISSOES = 3;
+const LIMITE_RECOMPENSAS = 3;
 const LIMITE_PRODUTOS = 4;
 
 export default function TelaDetalheLoja() {
@@ -35,12 +47,30 @@ export default function TelaDetalheLoja() {
     const [loja, setLoja] = useState<LojaCatalogoDetalhe | null>(null);
     const [ofertas, setOfertas] = useState<OfertaCatalogo[]>([]);
     const [missoes, setMissoes] = useState<MissaoCatalogo[]>([]);
+    const [estadoRecompensas, setEstadoRecompensas] = useState({
+        pontos: 0,
+        nivel: 1,
+        recompensas: [] as RecompensaCatalogo[],
+    });
     const [produtos, setProdutos] = useState<ProdutoCatalogo[]>([]);
     const [todasOfertas, setTodasOfertas] = useState(false);
     const [todasMissoes, setTodasMissoes] = useState(false);
+    const [todasRecompensas, setTodasRecompensas] = useState(false);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+
+    const {
+        recompensaPendente,
+        resgatandoId,
+        iniciarResgate,
+        cancelarResgate,
+        confirmarResgate,
+    } = useResgateRecompensa({
+        estado: estadoRecompensas,
+        setEstado: setEstadoRecompensas,
+        setErro,
+    });
 
     const nomeExibido = loja?.nomeFantasia ?? parametros.nome ?? "Loja";
 
@@ -57,16 +87,26 @@ export default function TelaDetalheLoja() {
         }
         setErro(null);
         try {
-            const [detalhe, ofertasLoja, missoesLoja, produtosLoja] = await Promise.all([
+            const [detalhe, ofertasLoja, missoesLoja, produtosLoja, catalogoRecompensas] =
+                await Promise.all([
                 buscarLojaCatalogo(lojistaId),
                 listarOfertasCatalogo(lojistaId),
                 listarMissoesCatalogo(lojistaId),
                 listarProdutosCatalogo(lojistaId),
+                obterCatalogoRecompensas(),
             ]);
             setLoja(detalhe);
             setOfertas(ofertasLoja);
             setMissoes(missoesLoja);
             setProdutos(produtosLoja);
+            setEstadoRecompensas({
+                pontos: catalogoRecompensas.pontos,
+                nivel: catalogoRecompensas.nivel,
+                recompensas: filtrarRecompensasPorLoja(
+                    catalogoRecompensas.recompensas,
+                    lojistaId,
+                ),
+            });
         } catch (causa) {
             setErro(normalizarErro(causa));
         } finally {
@@ -96,6 +136,13 @@ export default function TelaDetalheLoja() {
         () => (todasMissoes ? missoes : missoes.slice(0, LIMITE_MISSOES)),
         [missoes, todasMissoes],
     );
+    const recompensasVisiveis = useMemo(
+        () =>
+            todasRecompensas
+                ? estadoRecompensas.recompensas
+                : estadoRecompensas.recompensas.slice(0, LIMITE_RECOMPENSAS),
+        [estadoRecompensas.recompensas, todasRecompensas],
+    );
 
     if (carregando) {
         return (
@@ -114,6 +161,7 @@ export default function TelaDetalheLoja() {
     }
 
     return (
+        <>
         <ScrollView
             contentContainerStyle={estilos.conteudo}
             refreshControl={
@@ -190,6 +238,27 @@ export default function TelaDetalheLoja() {
             </Secao>
 
             <Secao
+                titulo="Recompensas"
+                verTodas={estadoRecompensas.recompensas.length > LIMITE_RECOMPENSAS}
+                expandido={todasRecompensas}
+                aoVerTodas={() => setTodasRecompensas((atual) => !atual)}
+            >
+                {recompensasVisiveis.length === 0 ? (
+                    <Text style={estilos.vazio}>Nenhuma recompensa disponível nesta loja.</Text>
+                ) : (
+                    recompensasVisiveis.map((recompensa) => (
+                        <CartaoRecompensa
+                            key={recompensa.id}
+                            onResgatar={iniciarResgate}
+                            pontos={estadoRecompensas.pontos}
+                            recompensa={recompensa}
+                            resgatando={resgatandoId === recompensa.id}
+                        />
+                    ))
+                )}
+            </Secao>
+
+            <Secao
                 titulo="Produtos"
                 verTodas={produtos.length > LIMITE_PRODUTOS}
                 rotuloVerTodas="Ver todos"
@@ -219,6 +288,16 @@ export default function TelaDetalheLoja() {
                 </Text>
             </View>
         </ScrollView>
+
+        {recompensaPendente ? (
+            <ModalConfirmarResgate
+                onCancelar={cancelarResgate}
+                onConfirmar={() => void confirmarResgate()}
+                recompensa={recompensaPendente}
+                resgatando={resgatandoId === recompensaPendente.id}
+            />
+        ) : null}
+        </>
     );
 }
 

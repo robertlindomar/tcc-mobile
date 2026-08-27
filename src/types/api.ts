@@ -85,3 +85,49 @@ export type RespostaConclusaoMissao = {
     missaoConsumidor: MissaoConsumidor;
     consumidor: PerfilConsumidorAtual["consumidor"];
 };
+
+export type SituacaoRecompensa = "DISPONIVEL" | "DESATIVADA" | "EXPIRADA" | "ESGOTADA";
+
+export type StatusResgateRecompensa = "PENDENTE_ENTREGA" | "ENTREGUE";
+
+export type RecompensaCatalogo = {
+    id: number;
+    nome: string;
+    descricao: string | null;
+    custoPontos: number;
+    ativa: boolean;
+    estoque: number | null;
+    dataFim: string | null;
+    dataFimCivil: string | null;
+    situacao: SituacaoRecompensa;
+    lojistaId: number;
+    nomeLoja?: string | null;
+    dataCriacao: string;
+    dataAtualizacao: string;
+};
+
+export type CatalogoRecompensas = {
+    pontos: number;
+    nivel: number;
+    recompensas: RecompensaCatalogo[];
+};
+
+export type ResgateRecompensa = {
+    id: number;
+    recompensaId: number;
+    consumidorId: number;
+    custoPontosSnapshot: number;
+    nomeRecompensaSnapshot: string;
+    status: StatusResgateRecompensa;
+    dataEntrega: string | null;
+    dataCriacao: string;
+    nomeConsumidor?: string | null;
+};
+
+export type RespostaResgatarRecompensa = {
+    resgate: ResgateRecompensa;
+    consumidor: {
+        pontos: number;
+        nivel: number;
+    };
+};
