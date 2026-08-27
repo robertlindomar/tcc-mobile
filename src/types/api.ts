@@ -27,12 +27,15 @@ export type PerfilConsumidorAtual = {
 export type LojaCatalogo = {
     id: number;
     nomeFantasia: string;
+    distanciaKm?: number | null;
 };
 
 export type LojaCatalogoDetalhe = {
     id: number;
     nomeFantasia: string;
     enderecoTexto: string | null;
+    latitude: number | null;
+    longitude: number | null;
 };
 
 export type ProdutoCatalogo = {

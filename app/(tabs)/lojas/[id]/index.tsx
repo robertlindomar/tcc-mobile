@@ -193,7 +193,13 @@ export default function TelaDetalheLoja() {
                 <BotaoAtalho
                     icone="navigate-outline"
                     rotulo="Como chegar"
-                    aoPressionar={() => void abrirMapa(loja?.enderecoTexto ?? null)}
+                    aoPressionar={() =>
+                        void abrirMapa({
+                            endereco: loja?.enderecoTexto ?? null,
+                            latitude: loja?.latitude ?? null,
+                            longitude: loja?.longitude ?? null,
+                        })
+                    }
                 />
                 <BotaoAtalho
                     icone="globe-outline"
@@ -409,12 +415,20 @@ function LinhaMissao({ missao }: { missao: MissaoCatalogo }) {
     );
 }
 
-async function abrirMapa(endereco: string | null) {
-    if (!endereco) {
+async function abrirMapa(destino: {
+    endereco: string | null;
+    latitude: number | null;
+    longitude: number | null;
+}) {
+    const coordenadasDisponiveis = destino.latitude != null && destino.longitude != null;
+    if (!coordenadasDisponiveis && !destino.endereco) {
         Alert.alert("Endereço indisponível", "Esta loja ainda não cadastrou um endereço.");
         return;
     }
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+    const destinoMapa = coordenadasDisponiveis
+        ? `${destino.latitude},${destino.longitude}`
+        : destino.endereco ?? "";
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoMapa)}`;
     await Linking.openURL(url);
 }
 

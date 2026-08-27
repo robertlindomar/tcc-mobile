@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BotaoPrimario } from "@/components/BotaoPrimario";
 import { useSessao } from "@/features/auth/ContextoSessao";
 import { cores } from "@/styles/tema";
@@ -16,6 +16,16 @@ export default function TelaPerfil() {
         .toUpperCase();
 
     function confirmarSaida() {
+        if (Platform.OS === "web") {
+            const confirmou = globalThis.confirm(
+                "Sair da conta? Você precisará informar suas credenciais para entrar novamente.",
+            );
+            if (confirmou) {
+                void sair();
+            }
+            return;
+        }
+
         Alert.alert("Sair da conta", "Você precisará informar suas credenciais para entrar novamente.", [
             { text: "Cancelar", style: "cancel" },
             { text: "Sair", style: "destructive", onPress: () => void sair() },

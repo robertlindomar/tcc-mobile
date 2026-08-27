@@ -46,6 +46,12 @@
         {
           "cameraPermission": "Permita o acesso à câmera para escanear QR codes de missões."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita o acesso à localização para ordenar as lojas por proximidade."
+        }
       ]
     ],
     "experiments": {

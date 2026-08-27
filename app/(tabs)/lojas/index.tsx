@@ -13,6 +13,8 @@ import {
 import { MensagemErro } from "@/components/MensagemErro";
 import { TelaEmBreve } from "@/components/TelaEmBreve";
 import { listarLojasCatalogo } from "@/features/lojas/servicoLoja";
+import { obterLocalizacaoConsumidor } from "@/features/lojas/servicoLocalizacao";
+import { formatarDistancia } from "@/features/lojas/formatarDistancia";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
 import { LojaCatalogo } from "@/types/api";
@@ -31,7 +33,8 @@ export default function TelaLojas() {
         }
         setErro(null);
         try {
-            setLojas(await listarLojasCatalogo());
+            const localizacao = await obterLocalizacaoConsumidor();
+            setLojas(await listarLojasCatalogo(localizacao ?? undefined));
         } catch (causa) {
             setErro(normalizarErro(causa));
         } finally {
@@ -100,7 +103,11 @@ export default function TelaLojas() {
                     </View>
                     <View style={estilos.texto}>
                         <Text style={estilos.nome}>{item.nomeFantasia}</Text>
-                        <Text style={estilos.subtitulo}>Ver produtos</Text>
+                        <Text style={estilos.subtitulo}>
+                            {item.distanciaKm != null
+                                ? formatarDistancia(item.distanciaKm)
+                                : "Ver produtos"}
+                        </Text>
                     </View>
                     <Ionicons color={cores.textoSecundario} name="chevron-forward" size={20} />
                 </Pressable>

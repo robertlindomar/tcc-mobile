@@ -47,11 +47,10 @@ function FallbackWeb() {
         try {
             const resposta = await concluirMissaoPorToken(entrada.trim());
             await atualizarPerfil();
-            Alert.alert(
-                "Missão concluída!",
-                `Você ganhou ${resposta.missaoConsumidor.pontoRecompensa ?? 0} pts. Total: ${resposta.consumidor.pontos} pts.`,
-                [{ text: "OK", onPress: () => router.back() }],
+            globalThis.alert(
+                `Missão concluída! Você ganhou ${resposta.missaoConsumidor.pontoRecompensa ?? 0} pts. Total: ${resposta.consumidor.pontos} pts.`,
             );
+            router.back();
         } catch (causa) {
             setErro(normalizarErro(causa));
         } finally {
