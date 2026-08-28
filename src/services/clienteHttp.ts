@@ -10,7 +10,12 @@ type OpcoesRequisicao = {
     token?: string;
 };
 
-type CorpoErro = { error?: string };
+type CorpoErro = {
+    error?: string;
+    disponivelEm?: string | null;
+    frequencia?: string | null;
+    repetivel?: boolean | null;
+};
 
 const TEMPO_LIMITE_MS = 12_000;
 let aoNaoAutorizado: (() => Promise<void> | void) | undefined;
@@ -47,6 +52,39 @@ function extrairMensagemErro(corpo: unknown): string {
     }
 
     return "Resposta inválida do servidor";
+}
+
+function extrairDisponivelEm(corpo: unknown): string | null | undefined {
+    if (typeof corpo === "object" && corpo !== null && "disponivelEm" in corpo) {
+        const { disponivelEm } = corpo as CorpoErro;
+        if (disponivelEm === null || typeof disponivelEm === "string") {
+            return disponivelEm;
+        }
+    }
+
+    return undefined;
+}
+
+function extrairFrequencia(corpo: unknown): string | null | undefined {
+    if (typeof corpo === "object" && corpo !== null && "frequencia" in corpo) {
+        const { frequencia } = corpo as CorpoErro;
+        if (frequencia === null || typeof frequencia === "string") {
+            return frequencia;
+        }
+    }
+
+    return undefined;
+}
+
+function extrairRepetivel(corpo: unknown): boolean | null | undefined {
+    if (typeof corpo === "object" && corpo !== null && "repetivel" in corpo) {
+        const { repetivel } = corpo as CorpoErro;
+        if (repetivel === null || typeof repetivel === "boolean") {
+            return repetivel;
+        }
+    }
+
+    return undefined;
 }
 
 export async function requisitar<T>(
@@ -88,7 +126,14 @@ export async function requisitar<T>(
                 await aoNaoAutorizado?.();
             }
 
-            throw new ErroApi(extrairMensagemErro(corpo), "HTTP", response.status);
+            throw new ErroApi(
+                extrairMensagemErro(corpo),
+                "HTTP",
+                response.status,
+                extrairDisponivelEm(corpo),
+                extrairFrequencia(corpo),
+                extrairRepetivel(corpo),
+            );
         }
 
         return corpo as T;

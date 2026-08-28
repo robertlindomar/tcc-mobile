@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "ios": { "supportsTablet": true },
     "android": {
+      "package": "dev.robertlindomar.conectacomercio",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

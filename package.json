@@ -4,10 +4,13 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start:tailscale": "REACT_NATIVE_PACKAGER_HOSTNAME=$(tailscale ip -4) expo start --lan",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "build:web": "expo export --platform web",
+    "build:android:apk": "expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease",
+    "build:android:apk:debug": "expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug",
     "lint": "expo lint -- --no-error-on-unmatched-pattern",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand"

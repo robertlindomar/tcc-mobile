@@ -7,7 +7,7 @@ export function obterUrlApi(): string {
 
     if (!url?.trim()) {
         throw new Error(
-            "A API não foi configurada. Defina EXPO_PUBLIC_API_URL no arquivo .env.local.",
+            "A API não foi configurada. Defina EXPO_PUBLIC_API_URL no arquivo .env.",
         );
     }
 

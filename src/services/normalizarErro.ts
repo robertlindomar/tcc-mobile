@@ -1,9 +1,32 @@
 import { ErroApi, ErroDominio } from "@/services/erros";
+import { formatarDisponibilidadeMissao, obterDataCivilSeguinteLocal } from "@/utils/formatarDisponibilidadeMissao";
 
 export const MENSAGEM_ERRO_CONEXAO =
     "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.";
 
-function mensagemHttp(status?: number, mensagemApi?: string): string {
+const MENSAGEM_MISSAO_UNICA_API = "Missao ja concluida";
+const MENSAGEM_MISSAO_PERIODO_API = "Missao ja concluida neste periodo";
+
+const MENSAGEM_MISSAO_UNICA_CONCLUIDA = "Missão já concluída";
+
+function mensagemRecompensaDisponivelEm(dataFormatada: string): string {
+    return `Você já concluiu esta missão hoje. Recompensa disponível em ${dataFormatada}.`;
+}
+
+function mensagemMissaoRecorrente(disponivelEm?: string | null): string {
+    if (disponivelEm) {
+        return mensagemRecompensaDisponivelEm(formatarDisponibilidadeMissao(disponivelEm));
+    }
+
+    return mensagemRecompensaDisponivelEm(obterDataCivilSeguinteLocal());
+}
+
+function mensagemHttp(
+    status?: number,
+    mensagemApi?: string,
+    disponivelEm?: string | null,
+    repetivel?: boolean | null,
+): string {
     if (status === 401) {
         return "E-mail ou senha inválidos.";
     }
@@ -18,6 +41,17 @@ function mensagemHttp(status?: number, mensagemApi?: string): string {
     }
     if (status && status >= 500) {
         return "O servidor está indisponível no momento. Tente novamente.";
+    }
+
+    if (
+        mensagemApi === MENSAGEM_MISSAO_UNICA_API ||
+        repetivel === false
+    ) {
+        return MENSAGEM_MISSAO_UNICA_CONCLUIDA;
+    }
+
+    if (mensagemApi === MENSAGEM_MISSAO_PERIODO_API || repetivel === true) {
+        return mensagemMissaoRecorrente(disponivelEm);
     }
 
     const mensagensConhecidas: Record<string, string> = {
@@ -45,7 +79,7 @@ export function normalizarErro(erro: unknown): string {
         if (erro.tipo === "CONFIGURACAO") {
             return "A configuração da API está incompleta. Consulte o README do projeto.";
         }
-        return mensagemHttp(erro.status, erro.message);
+        return mensagemHttp(erro.status, erro.message, erro.disponivelEm, erro.repetivel);
     }
 
     if (erro instanceof ErroDominio) {
