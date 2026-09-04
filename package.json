@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "start:tailscale": "REACT_NATIVE_PACKAGER_HOSTNAME=$(tailscale ip -4) expo start --lan",
+    "start:tailscale": "EXPO_PUBLIC_API_URL=http://$(tailscale ip -4):3000 REACT_NATIVE_PACKAGER_HOSTNAME=$(tailscale ip -4) expo start --lan",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

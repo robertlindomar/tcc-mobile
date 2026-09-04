@@ -12,7 +12,11 @@ function formatarData(dataIso: string) {
 
 export function ItemResgate({ resgate }: Props) {
     const status =
-        resgate.status === "PENDENTE_ENTREGA" ? "Aguardando entrega" : "Entregue";
+        resgate.status === "PENDENTE_ENTREGA"
+            ? "Retire na loja"
+            : resgate.status === "RECUSADO"
+              ? "Recusado · pontos devolvidos"
+              : "Entregue";
 
     return (
         <View style={estilos.item}>

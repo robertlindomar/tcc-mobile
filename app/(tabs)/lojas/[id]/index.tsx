@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { MensagemErro } from "@/components/MensagemErro";
+import { CartaoOferta } from "@/features/lojas/components/CartaoOferta";
 import { CartaoProduto } from "@/features/lojas/components/CartaoProduto";
 import { buscarLojaCatalogo } from "@/features/lojas/servicoLoja";
 import { listarMissoesCatalogo } from "@/features/missoes/servicoCatalogoMissao";
@@ -33,9 +34,7 @@ import {
     ProdutoCatalogo,
     RecompensaCatalogo,
 } from "@/types/api";
-import { formatarDataCivil } from "@/utils/formatarDataCivil";
 
-const LIMITE_OFERTAS = 2;
 const LIMITE_MISSOES = 3;
 const LIMITE_RECOMPENSAS = 3;
 const LIMITE_PRODUTOS = 4;
@@ -53,7 +52,6 @@ export default function TelaDetalheLoja() {
         recompensas: [] as RecompensaCatalogo[],
     });
     const [produtos, setProdutos] = useState<ProdutoCatalogo[]>([]);
-    const [todasOfertas, setTodasOfertas] = useState(false);
     const [todasMissoes, setTodasMissoes] = useState(false);
     const [todasRecompensas, setTodasRecompensas] = useState(false);
     const [carregando, setCarregando] = useState(true);
@@ -128,10 +126,14 @@ export default function TelaDetalheLoja() {
         });
     }, [loja?.enderecoTexto, nomeExibido, navigation]);
 
-    const ofertasVisiveis = useMemo(
-        () => (todasOfertas ? ofertas : ofertas.slice(0, LIMITE_OFERTAS)),
-        [ofertas, todasOfertas],
-    );
+    const produtoPorId = useMemo(() => {
+        const mapa = new Map<number, ProdutoCatalogo>();
+        for (const produto of produtos) {
+            mapa.set(produto.id, produto);
+        }
+        return mapa;
+    }, [produtos]);
+
     const missoesVisiveis = useMemo(
         () => (todasMissoes ? missoes : missoes.slice(0, LIMITE_MISSOES)),
         [missoes, todasMissoes],
@@ -217,16 +219,27 @@ export default function TelaDetalheLoja() {
                 </View>
             ) : null}
 
-            <Secao
-                titulo="Ofertas da loja"
-                verTodas={ofertas.length > LIMITE_OFERTAS}
-                expandido={todasOfertas}
-                aoVerTodas={() => setTodasOfertas((atual) => !atual)}
-            >
-                {ofertasVisiveis.length === 0 ? (
+            <Secao titulo="Ofertas da loja">
+                {ofertas.length === 0 ? (
                     <Text style={estilos.vazio}>Nenhuma oferta vigente no momento.</Text>
                 ) : (
-                    ofertasVisiveis.map((oferta) => <CartaoOferta key={oferta.id} oferta={oferta} />)
+                    <ScrollView
+                        contentContainerStyle={estilos.carrosselOfertas}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                    >
+                        {ofertas.map((oferta) => {
+                            const produto = produtoPorId.get(oferta.produtoId);
+                            return (
+                                <CartaoOferta
+                                    key={oferta.id}
+                                    oferta={oferta}
+                                    urlImagem={produto?.urlImagem}
+                                    valorOriginal={produto?.valor}
+                                />
+                            );
+                        })}
+                    </ScrollView>
                 )}
             </Secao>
 
@@ -387,23 +400,6 @@ function Secao({
     );
 }
 
-function CartaoOferta({ oferta }: { oferta: OfertaCatalogo }) {
-    const titulo = oferta.descricao?.trim() || oferta.produtoNome;
-    const selo = oferta.percentualDesconto ? `${oferta.percentualDesconto}% OFF` : "Oferta";
-
-    return (
-        <View style={estilos.cartaoOferta}>
-            <View style={estilos.ofertaTexto}>
-                <Text style={estilos.ofertaTitulo}>{titulo}</Text>
-                <Text style={estilos.ofertaValidade}>Válido até {formatarDataCivil(oferta.dataFimCivil)}</Text>
-            </View>
-            <View style={estilos.selo}>
-                <Text style={estilos.textoSelo}>{selo}</Text>
-            </View>
-        </View>
-    );
-}
-
 function LinhaMissao({ missao }: { missao: MissaoCatalogo }) {
     return (
         <View style={estilos.linhaMissao}>
@@ -469,21 +465,7 @@ const estilos = StyleSheet.create({
     tituloSecao: { color: cores.texto, fontSize: 17, fontWeight: "800" },
     verTodas: { color: cores.primaria, fontSize: 13, fontWeight: "700" },
     vazio: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20 },
-    cartaoOferta: {
-        alignItems: "center",
-        backgroundColor: cores.superficie,
-        borderColor: cores.borda,
-        borderRadius: 16,
-        borderWidth: 1,
-        flexDirection: "row",
-        gap: 12,
-        padding: 14,
-    },
-    ofertaTexto: { flex: 1 },
-    ofertaTitulo: { color: cores.texto, fontSize: 15, fontWeight: "700" },
-    ofertaValidade: { color: cores.textoSecundario, fontSize: 13, marginTop: 4 },
-    selo: { backgroundColor: cores.ouroSuave, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-    textoSelo: { color: cores.ouro, fontSize: 12, fontWeight: "800" },
+    carrosselOfertas: { gap: 12, paddingRight: 4 },
     linhaMissao: {
         alignItems: "center",
         backgroundColor: cores.superficie,
