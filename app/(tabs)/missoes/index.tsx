@@ -74,15 +74,26 @@ export default function TelaMissoes() {
                 />
             }
         >
-            <Pressable
-                accessibilityLabel="Escanear QR da missão"
-                accessibilityRole="button"
-                onPress={() => router.push("/missoes/escanear")}
-                style={({ pressed }) => [estilos.botaoEscanear, pressed && estilos.pressionado]}
-            >
-                <Ionicons color="#FFFFFF" name="qr-code-outline" size={22} />
-                <Text style={estilos.textoBotaoEscanear}>Escanear QR</Text>
-            </Pressable>
+            <View style={estilos.grupoAcoes}>
+                <Pressable
+                    accessibilityLabel="Escanear QR da missão"
+                    accessibilityRole="button"
+                    onPress={() => router.push("/missoes/escanear")}
+                    style={({ pressed }) => [estilos.botaoEscanear, pressed && estilos.pressionado]}
+                >
+                    <Ionicons color="#FFFFFF" name="qr-code-outline" size={22} />
+                    <Text style={estilos.textoBotaoEscanear}>Escanear QR</Text>
+                </Pressable>
+                <Pressable
+                    accessibilityLabel="Ler NFC-e da nota fiscal"
+                    accessibilityRole="button"
+                    onPress={() => router.push("/missoes/ler-nfce")}
+                    style={({ pressed }) => [estilos.botaoNfce, pressed && estilos.pressionado]}
+                >
+                    <Ionicons color={cores.primaria} name="receipt-outline" size={22} />
+                    <Text style={estilos.textoBotaoNfce}>Ler NFC-e</Text>
+                </Pressable>
+            </View>
 
             <MensagemErro mensagem={erro} />
 
@@ -133,8 +144,21 @@ const estilos = StyleSheet.create({
         justifyContent: "center",
         paddingVertical: 16,
     },
+    botaoNfce: {
+        alignItems: "center",
+        backgroundColor: cores.superficie,
+        borderColor: cores.primaria,
+        borderRadius: 16,
+        borderWidth: 2,
+        flexDirection: "row",
+        gap: 10,
+        justifyContent: "center",
+        paddingVertical: 14,
+    },
+    grupoAcoes: { gap: 10 },
     pressionado: { opacity: 0.88 },
     textoBotaoEscanear: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
+    textoBotaoNfce: { color: cores.primaria, fontSize: 16, fontWeight: "800" },
     secao: { gap: 10 },
     tituloSecao: { color: cores.texto, fontSize: 17, fontWeight: "800" },
     lista: { gap: 10 },

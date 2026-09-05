@@ -30,18 +30,6 @@ function mensagemHttp(
     if (status === 401) {
         return "E-mail ou senha inválidos.";
     }
-    if (status === 403) {
-        return "Você não tem permissão para realizar esta ação.";
-    }
-    if (status === 404) {
-        return "Não foi possível encontrar as informações solicitadas.";
-    }
-    if (status === 502) {
-        return "Não foi possível validar o CEP agora. Tente novamente.";
-    }
-    if (status && status >= 500) {
-        return "O servidor está indisponível no momento. Tente novamente.";
-    }
 
     if (
         mensagemApi === MENSAGEM_MISSAO_UNICA_API ||
@@ -66,9 +54,40 @@ function mensagemHttp(
         "Recompensa esgotada": "Esta recompensa está esgotada.",
         "Recompensa expirada": "Esta recompensa expirou.",
         "Recompensa nao disponivel": "Esta recompensa não está disponível.",
+        "Nota fiscal ja utilizada": "Esta nota fiscal já foi utilizada.",
+        "Loja nao cadastrada": "Esta loja não está cadastrada no Conecta Comércio.",
+        "Loja nao aprovada": "Esta loja ainda não está aprovada para a campanha.",
+        "Loja nao participa desta campanha": "Esta loja não participa desta campanha.",
+        "Data da compra fora do periodo da campanha":
+            "A data da compra está fora do período da campanha.",
+        "Nenhuma campanha vigente": "Não há campanha vigente no momento.",
+        "Informe a campanha": "Há mais de uma campanha vigente. Selecione a campanha.",
+        "Campanha nao encontrada": "Campanha não encontrada.",
+        "Nota demo nao encontrada": "Nota de demonstração não encontrada.",
+        "Chave de acesso da NFC-e invalida": "Chave de acesso da NFC-e inválida.",
+        "payloadQr e obrigatorio": "Informe o QR code da nota fiscal.",
+        "Payload da NFC-e e obrigatorio": "Informe o QR code da nota fiscal.",
+        "Nao foi possivel ler a NFC-e": "Não foi possível ler a NFC-e. Tente novamente.",
     };
 
-    return mensagensConhecidas[mensagemApi ?? ""] ?? "Não foi possível concluir a operação. Tente novamente.";
+    if (mensagemApi && mensagensConhecidas[mensagemApi]) {
+        return mensagensConhecidas[mensagemApi];
+    }
+
+    if (status === 403) {
+        return "Você não tem permissão para realizar esta ação.";
+    }
+    if (status === 404) {
+        return "Não foi possível encontrar as informações solicitadas.";
+    }
+    if (status === 502) {
+        return "Não foi possível validar o CEP agora. Tente novamente.";
+    }
+    if (status && status >= 500) {
+        return "O servidor está indisponível no momento. Tente novamente.";
+    }
+
+    return "Não foi possível concluir a operação. Tente novamente.";
 }
 
 export function normalizarErro(erro: unknown): string {

@@ -45,7 +45,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Permita o acesso à câmera para escanear QR codes de missões."
+          "cameraPermission": "Permita o acesso à câmera para escanear QR codes de missões e notas fiscais."
         }
       ],
       [
