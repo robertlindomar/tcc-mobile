@@ -149,3 +149,12 @@ export type RespostaProcessamentoNfce = {
     dataEmissao: string;
     modoSimulado: true;
 };
+
+/** Item de GET /nfce/campanhas-vigentes */
+export type CampanhaVigente = {
+    id: number;
+    nome: string;
+    dataInicioCivil: string;
+    dataFimCivil: string;
+    valorPorTicket: number;
+};

@@ -40,6 +40,15 @@ export default function LayoutAbas() {
                 }}
             />
             <Tabs.Screen
+                name="nfce"
+                options={{
+                    title: "Ler NFC-e",
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons color={color} name="receipt-outline" size={size} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
                 name="recompensas"
                 options={{
                     title: "Recompensas",

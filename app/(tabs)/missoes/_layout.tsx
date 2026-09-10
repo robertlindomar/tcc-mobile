@@ -14,7 +14,6 @@ export default function LayoutMissoes() {
         >
             <Stack.Screen name="index" options={{ title: "Missões" }} />
             <Stack.Screen name="escanear" options={{ title: "Escanear QR" }} />
-            <Stack.Screen name="ler-nfce" options={{ title: "Ler NFC-e" }} />
         </Stack>
     );
 }

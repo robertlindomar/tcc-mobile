@@ -1,15 +1,19 @@
 import { requisitar } from "@/services/clienteHttp";
-import { RespostaProcessamentoNfce } from "@/types/api";
+import { CampanhaVigente, RespostaProcessamentoNfce } from "@/types/api";
+
+export async function listarCampanhasVigentes(): Promise<CampanhaVigente[]> {
+    return requisitar<CampanhaVigente[]>("/nfce/campanhas-vigentes");
+}
 
 export async function processarNfce(dados: {
     payloadQr: string;
-    campanhaId?: number;
+    campanhaId: number;
 }): Promise<RespostaProcessamentoNfce> {
     return requisitar<RespostaProcessamentoNfce>("/nfce/processar", {
         metodo: "POST",
         corpo: {
             payloadQr: dados.payloadQr,
-            ...(dados.campanhaId !== undefined ? { campanhaId: dados.campanhaId } : {}),
+            campanhaId: dados.campanhaId,
         },
     });
 }
