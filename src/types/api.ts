@@ -135,7 +135,7 @@ export type RespostaResgatarRecompensa = {
     };
 };
 
-/** Resposta de POST /nfce/processar (adaptador demo rotulado). */
+/** Resposta de POST /nfce/processar. */
 export type RespostaProcessamentoNfce = {
     id: number;
     campanhaId: number;
@@ -147,7 +147,9 @@ export type RespostaProcessamentoNfce = {
     ticketsTotaisCampanha: number;
     lojistaId: number;
     dataEmissao: string;
-    modoSimulado: true;
+    modoSimulado: boolean;
+    provider?: "simulado" | "sefaz";
+    statusFiscal?: string;
 };
 
 /** Item de GET /nfce/campanhas-vigentes */

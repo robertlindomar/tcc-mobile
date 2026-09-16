@@ -7,8 +7,9 @@
     "icon": "./assets/images/icon.png",
     "scheme": "conectacomercio",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "ios": { "supportsTablet": true },
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "package": "dev.robertlindomar.conectacomercio",
       "adaptiveIcon": {
@@ -17,7 +18,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -40,7 +40,9 @@
       ],
       [
         "expo-secure-store",
-        { "configureAndroidBackup": true }
+        {
+          "configureAndroidBackup": true
+        }
       ],
       [
         "expo-camera",
@@ -53,7 +55,9 @@
         {
           "locationWhenInUsePermission": "Permita o acesso à localização para ordenar as lojas por proximidade."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,

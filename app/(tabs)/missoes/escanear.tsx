@@ -171,7 +171,7 @@ function EscanearNativo() {
             <CameraView
                 barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                 onBarcodeScanned={({ data }) => void processarLeitura(data)}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
             />
             <View style={estilos.overlay}>
                 <View style={estilos.moldura} />
@@ -234,7 +234,7 @@ const estilos = StyleSheet.create({
     textoPermissao: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
     containerCamera: { backgroundColor: "#000000", flex: 1 },
     overlay: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
