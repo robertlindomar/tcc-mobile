@@ -13,6 +13,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { CartaoOferta } from "@/features/lojas/components/CartaoOferta";
 import { CartaoProduto } from "@/features/lojas/components/CartaoProduto";
@@ -148,22 +149,27 @@ export default function TelaDetalheLoja() {
 
     if (carregando) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     if (erro && !loja) {
         return (
-            <View style={estilos.conteudoErro}>
-                <MensagemErro mensagem={erro} />
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudoErro}>
+                    <MensagemErro mensagem={erro} />
+                </View>
+            </FundoPastel>
         );
     }
 
     return (
         <>
+        <FundoPastel>
         <ScrollView
             contentContainerStyle={estilos.conteudo}
             refreshControl={
@@ -173,6 +179,7 @@ export default function TelaDetalheLoja() {
                     refreshing={atualizando}
                 />
             }
+            style={estilos.scroll}
         >
             <View style={estilos.identidade}>
                 <View style={estilos.iconeLoja}>
@@ -307,6 +314,7 @@ export default function TelaDetalheLoja() {
                 </Text>
             </View>
         </ScrollView>
+        </FundoPastel>
 
         {recompensaPendente ? (
             <ModalConfirmarResgate
@@ -429,9 +437,10 @@ async function abrirMapa(destino: {
 }
 
 const estilos = StyleSheet.create({
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
-    conteudoErro: { backgroundColor: cores.fundo, flex: 1, padding: 20 },
-    conteudo: { backgroundColor: cores.fundo, gap: 18, padding: 20, paddingBottom: 36 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
+    conteudoErro: { flex: 1, padding: 20 },
+    scroll: { backgroundColor: "transparent", flex: 1 },
+    conteudo: { gap: 18, padding: 20, paddingBottom: 36 },
     acoesCabecalho: { flexDirection: "row", gap: 16, marginRight: 4 },
     identidade: { alignItems: "center", flexDirection: "row", gap: 14 },
     iconeLoja: {
@@ -450,7 +459,7 @@ const estilos = StyleSheet.create({
         alignItems: "center",
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 14,
+        borderRadius: 16,
         borderWidth: 1,
         flex: 1,
         gap: 6,
@@ -470,7 +479,7 @@ const estilos = StyleSheet.create({
         alignItems: "center",
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 16,
+        borderRadius: 18,
         borderWidth: 1,
         flexDirection: "row",
         gap: 12,
@@ -478,13 +487,18 @@ const estilos = StyleSheet.create({
         paddingVertical: 12,
     },
     nomeMissao: { color: cores.texto, flex: 1, fontSize: 14, fontWeight: "600" },
-    seloPontos: { backgroundColor: cores.ouroSuave, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+    seloPontos: {
+        backgroundColor: cores.ouroSuave,
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+    },
     textoSeloPontos: { color: cores.ouro, fontSize: 12, fontWeight: "800" },
     gradeProdutos: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "space-between" },
     cta: {
         alignItems: "flex-start",
         backgroundColor: cores.ctaFundo,
-        borderRadius: 16,
+        borderRadius: 18,
         flexDirection: "row",
         gap: 10,
         padding: 16,

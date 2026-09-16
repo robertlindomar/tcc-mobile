@@ -65,7 +65,7 @@ const estilos = StyleSheet.create({
     },
     modal: {
         backgroundColor: cores.superficie,
-        borderRadius: 16,
+        borderRadius: 20,
         gap: 12,
         maxWidth: 420,
         padding: 20,
@@ -77,14 +77,14 @@ const estilos = StyleSheet.create({
     acoes: { flexDirection: "row", gap: 10, justifyContent: "flex-end", marginTop: 4 },
     botaoSecundario: {
         borderColor: cores.borda,
-        borderRadius: 10,
+        borderRadius: 16,
         borderWidth: 1,
         paddingHorizontal: 14,
         paddingVertical: 10,
     },
     botaoPrimario: {
         backgroundColor: cores.primaria,
-        borderRadius: 10,
+        borderRadius: 16,
         paddingHorizontal: 14,
         paddingVertical: 10,
     },

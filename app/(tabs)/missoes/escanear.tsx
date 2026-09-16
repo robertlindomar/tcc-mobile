@@ -13,6 +13,7 @@ import {
     View,
 } from "react-native";
 import { MensagemErro } from "@/components/MensagemErro";
+import { FundoPastel } from "@/components/FundoPastel";
 import { useSessao } from "@/features/auth/ContextoSessao";
 import { extrairTokenQrMissao } from "@/features/missoes/extrairTokenQrMissao";
 import { concluirMissaoPorToken } from "@/features/missoes/servicoMissaoConsumidor";
@@ -59,43 +60,45 @@ function FallbackWeb() {
     }
 
     return (
-        <View style={estilos.conteudoWeb}>
-            <View style={estilos.avisoWeb}>
-                <Ionicons color={cores.primaria} name="information-circle-outline" size={22} />
-                <Text style={estilos.textoAvisoWeb}>
-                    No navegador, cole o conteúdo do QR da missão para simular a leitura.
-                </Text>
+        <FundoPastel>
+            <View style={estilos.conteudoWeb}>
+                <View style={estilos.avisoWeb}>
+                    <Ionicons color={cores.primaria} name="information-circle-outline" size={22} />
+                    <Text style={estilos.textoAvisoWeb}>
+                        No navegador, cole o conteúdo do QR da missão para simular a leitura.
+                    </Text>
+                </View>
+                <Text style={estilos.rotulo}>Payload ou token do QR</Text>
+                <TextInput
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!processando}
+                    multiline
+                    onChangeText={setEntrada}
+                    placeholder="tcc://missao/…"
+                    placeholderTextColor={cores.textoSecundario}
+                    style={estilos.campo}
+                    value={entrada}
+                />
+                <MensagemErro mensagem={erro} />
+                <Pressable
+                    accessibilityRole="button"
+                    disabled={processando}
+                    onPress={() => void concluir()}
+                    style={({ pressed }) => [
+                        estilos.botaoConcluir,
+                        processando && estilos.botaoDesabilitado,
+                        pressed && !processando && estilos.pressionado,
+                    ]}
+                >
+                    {processando ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                        <Text style={estilos.textoBotaoConcluir}>Concluir missão</Text>
+                    )}
+                </Pressable>
             </View>
-            <Text style={estilos.rotulo}>Payload ou token do QR</Text>
-            <TextInput
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!processando}
-                multiline
-                onChangeText={setEntrada}
-                placeholder="tcc://missao/…"
-                placeholderTextColor={cores.textoSecundario}
-                style={estilos.campo}
-                value={entrada}
-            />
-            <MensagemErro mensagem={erro} />
-            <Pressable
-                accessibilityRole="button"
-                disabled={processando}
-                onPress={() => void concluir()}
-                style={({ pressed }) => [
-                    estilos.botaoConcluir,
-                    processando && estilos.botaoDesabilitado,
-                    pressed && !processando && estilos.pressionado,
-                ]}
-            >
-                {processando ? (
-                    <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                    <Text style={estilos.textoBotaoConcluir}>Concluir missão</Text>
-                )}
-            </Pressable>
-        </View>
+        </FundoPastel>
     );
 }
 
@@ -141,28 +144,32 @@ function EscanearNativo() {
 
     if (!permissao) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     if (!permissao.granted) {
         return (
-            <View style={estilos.conteudoPermissao}>
-                <Ionicons color={cores.primaria} name="camera-outline" size={48} />
-                <Text style={estilos.tituloPermissao}>Acesso à câmera</Text>
-                <Text style={estilos.textoPermissao}>
-                    Precisamos da câmera para ler o QR code da missão na loja.
-                </Text>
-                <Pressable
-                    accessibilityRole="button"
-                    onPress={() => void solicitarPermissao()}
-                    style={({ pressed }) => [estilos.botaoConcluir, pressed && estilos.pressionado]}
-                >
-                    <Text style={estilos.textoBotaoConcluir}>Permitir câmera</Text>
-                </Pressable>
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudoPermissao}>
+                    <Ionicons color={cores.primaria} name="camera-outline" size={48} />
+                    <Text style={estilos.tituloPermissao}>Acesso à câmera</Text>
+                    <Text style={estilos.textoPermissao}>
+                        Precisamos da câmera para ler o QR code da missão na loja.
+                    </Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        onPress={() => void solicitarPermissao()}
+                        style={({ pressed }) => [estilos.botaoConcluir, pressed && estilos.pressionado]}
+                    >
+                        <Text style={estilos.textoBotaoConcluir}>Permitir câmera</Text>
+                    </Pressable>
+                </View>
+            </FundoPastel>
         );
     }
 
@@ -189,12 +196,12 @@ function EscanearNativo() {
 }
 
 const estilos = StyleSheet.create({
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
-    conteudoWeb: { backgroundColor: cores.fundo, flex: 1, gap: 12, padding: 20 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
+    conteudoWeb: { flex: 1, gap: 12, padding: 20 },
     avisoWeb: {
         alignItems: "flex-start",
         backgroundColor: cores.primariaSuave,
-        borderRadius: 14,
+        borderRadius: 16,
         flexDirection: "row",
         gap: 10,
         padding: 14,
@@ -204,7 +211,7 @@ const estilos = StyleSheet.create({
     campo: {
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 14,
+        borderRadius: 16,
         borderWidth: 1,
         color: cores.texto,
         fontSize: 14,
@@ -215,8 +222,9 @@ const estilos = StyleSheet.create({
     botaoConcluir: {
         alignItems: "center",
         backgroundColor: cores.primaria,
-        borderRadius: 14,
+        borderRadius: 16,
         marginTop: 8,
+        overflow: "hidden",
         paddingVertical: 14,
     },
     botaoDesabilitado: { opacity: 0.7 },
@@ -224,7 +232,6 @@ const estilos = StyleSheet.create({
     textoBotaoConcluir: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
     conteudoPermissao: {
         alignItems: "center",
-        backgroundColor: cores.fundo,
         flex: 1,
         gap: 12,
         justifyContent: "center",

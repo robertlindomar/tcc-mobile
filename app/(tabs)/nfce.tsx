@@ -13,6 +13,7 @@ import {
     View,
 } from "react-native";
 import { MensagemErro } from "@/components/MensagemErro";
+import { FundoPastel } from "@/components/FundoPastel";
 import { listarCampanhasVigentes, processarNfce } from "@/features/nfce/servicoNfce";
 import { parsearQrNfce } from "@/features/nfce/parsearQrNfce";
 import { normalizarErro } from "@/services/normalizarErro";
@@ -74,59 +75,67 @@ export default function TelaAbaNfce() {
 
     if (carregandoCampanhas) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     if (erroCampanhas) {
         return (
-            <View style={estilos.conteudoEstado}>
-                <MensagemErro mensagem={erroCampanhas} />
-                <Pressable
-                    accessibilityRole="button"
-                    onPress={() => void carregarCampanhas()}
-                    style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
-                >
-                    <Text style={estilos.textoBotaoAcao}>Tentar novamente</Text>
-                </Pressable>
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudoEstado}>
+                    <MensagemErro mensagem={erroCampanhas} />
+                    <Pressable
+                        accessibilityRole="button"
+                        onPress={() => void carregarCampanhas()}
+                        style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
+                    >
+                        <Text style={estilos.textoBotaoAcao}>Tentar novamente</Text>
+                    </Pressable>
+                </View>
+            </FundoPastel>
         );
     }
 
     if (campanhas.length === 0 || campanhaId === null) {
         return (
-            <View style={estilos.conteudoEstado}>
-                <Ionicons color={cores.primaria} name="calendar-outline" size={40} />
-                <Text style={estilos.tituloEstado}>Nenhuma campanha vigente</Text>
-                <Text style={estilos.textoEstado}>
-                    Não há campanha aberta para creditar tickets agora. Tente mais tarde.
-                </Text>
-                <Pressable
-                    accessibilityRole="button"
-                    onPress={() => void carregarCampanhas()}
-                    style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
-                >
-                    <Text style={estilos.textoBotaoAcao}>Atualizar</Text>
-                </Pressable>
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudoEstado}>
+                    <Ionicons color={cores.primaria} name="calendar-outline" size={40} />
+                    <Text style={estilos.tituloEstado}>Nenhuma campanha vigente</Text>
+                    <Text style={estilos.textoEstado}>
+                        Não há campanha aberta para creditar tickets agora. Tente mais tarde.
+                    </Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        onPress={() => void carregarCampanhas()}
+                        style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
+                    >
+                        <Text style={estilos.textoBotaoAcao}>Atualizar</Text>
+                    </Pressable>
+                </View>
+            </FundoPastel>
         );
     }
 
     return (
-        <View style={estilos.container}>
-            <SeletorCampanha
-                campanhaId={campanhaId}
-                campanhas={campanhas}
-                onChange={setCampanhaId}
-            />
-            {Platform.OS === "web" ? (
-                <FallbackWeb campanhaId={campanhaId} />
-            ) : (
-                <EscanearNativo campanhaId={campanhaId} />
-            )}
-        </View>
+        <FundoPastel>
+            <View style={estilos.container}>
+                <SeletorCampanha
+                    campanhaId={campanhaId}
+                    campanhas={campanhas}
+                    onChange={setCampanhaId}
+                />
+                {Platform.OS === "web" ? (
+                    <FallbackWeb campanhaId={campanhaId} />
+                ) : (
+                    <EscanearNativo campanhaId={campanhaId} />
+                )}
+            </View>
+        </FundoPastel>
     );
 }
 
@@ -144,12 +153,13 @@ function SeletorCampanha({
         return (
             <View style={estilos.barraCampanha}>
                 <Text style={estilos.rotuloCampanha}>Campanha</Text>
-                <Text style={estilos.nomeCampanhaUnica}>{unica.nome}</Text>
-                <Text style={estilos.metaCampanha}>
-                    {formatarDataCivil(unica.dataInicioCivil)} –{" "}
-                    {formatarDataCivil(unica.dataFimCivil)} · {formatarMoeda(unica.valorPorTicket)}
-                    /ticket
-                </Text>
+                <View style={[estilos.chip, estilos.chipAtivo, estilos.chipUnica]}>
+                    <Text style={[estilos.chipTitulo, estilos.chipTituloAtivo]}>{unica.nome}</Text>
+                    <Text style={[estilos.chipMeta, estilos.chipMetaAtivo]}>
+                        {formatarDataCivil(unica.dataInicioCivil)} – {formatarDataCivil(unica.dataFimCivil)} ·{" "}
+                        {formatarMoeda(unica.valorPorTicket)}/ticket
+                    </Text>
+                </View>
             </View>
         );
     }
@@ -386,11 +396,10 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
 }
 
 const estilos = StyleSheet.create({
-    container: { backgroundColor: cores.fundo, flex: 1 },
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
+    container: { flex: 1 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
     conteudoEstado: {
         alignItems: "center",
-        backgroundColor: cores.fundo,
         flex: 1,
         gap: 12,
         justifyContent: "center",
@@ -399,36 +408,32 @@ const estilos = StyleSheet.create({
     tituloEstado: { color: cores.texto, fontSize: 18, fontWeight: "800", textAlign: "center" },
     textoEstado: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
     barraCampanha: {
-        backgroundColor: cores.superficie,
-        borderBottomColor: cores.borda,
-        borderBottomWidth: 1,
         gap: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,
     },
-    rotuloCampanha: { color: cores.textoSecundario, fontSize: 12, fontWeight: "700" },
-    nomeCampanhaUnica: { color: cores.texto, fontSize: 16, fontWeight: "800" },
-    metaCampanha: { color: cores.textoSecundario, fontSize: 13 },
+    rotuloCampanha: { color: cores.texto, fontSize: 13, fontWeight: "700" },
     listaChips: { gap: 8, paddingVertical: 2 },
     chip: {
-        backgroundColor: cores.fundo,
+        backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 14,
+        borderRadius: 16,
         borderWidth: 1,
-        minWidth: 140,
+        minWidth: 160,
         paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingVertical: 12,
     },
     chipAtivo: { backgroundColor: cores.primaria, borderColor: cores.primaria },
+    chipUnica: { minWidth: undefined, width: "100%" },
     chipTitulo: { color: cores.texto, fontSize: 14, fontWeight: "800" },
     chipTituloAtivo: { color: "#FFFFFF" },
     chipMeta: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
     chipMetaAtivo: { color: "rgba(255,255,255,0.9)" },
-    conteudoWeb: { backgroundColor: cores.fundo, flex: 1, gap: 12, padding: 20 },
+    conteudoWeb: { flex: 1, gap: 12, padding: 20 },
     avisoWeb: {
         alignItems: "flex-start",
         backgroundColor: cores.primariaSuave,
-        borderRadius: 14,
+        borderRadius: 16,
         flexDirection: "row",
         gap: 10,
         padding: 14,
@@ -438,7 +443,7 @@ const estilos = StyleSheet.create({
     campo: {
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 14,
+        borderRadius: 16,
         borderWidth: 1,
         color: cores.texto,
         fontSize: 14,
@@ -449,8 +454,9 @@ const estilos = StyleSheet.create({
     botaoAcao: {
         alignItems: "center",
         backgroundColor: cores.primaria,
-        borderRadius: 14,
+        borderRadius: 16,
         marginTop: 8,
+        overflow: "hidden",
         paddingVertical: 14,
     },
     botaoDesabilitado: { opacity: 0.7 },
@@ -458,7 +464,6 @@ const estilos = StyleSheet.create({
     textoBotaoAcao: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
     conteudoPermissao: {
         alignItems: "center",
-        backgroundColor: cores.fundo,
         flex: 1,
         gap: 12,
         justifyContent: "center",
@@ -466,14 +471,13 @@ const estilos = StyleSheet.create({
     },
     conteudoScannerFechado: {
         alignItems: "center",
-        backgroundColor: cores.fundo,
         flex: 1,
         gap: 12,
         justifyContent: "center",
         padding: 24,
     },
     tituloPermissao: { color: cores.texto, fontSize: 20, fontWeight: "800" },
-    tituloSucesso: { color: "#15803D", fontSize: 20, fontWeight: "800", textAlign: "center" },
+    tituloSucesso: { color: cores.primariaEscura, fontSize: 20, fontWeight: "800", textAlign: "center" },
     textoPermissao: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
     textoResultado: { color: cores.texto, fontSize: 15, lineHeight: 22, textAlign: "center" },
     containerCamera: { backgroundColor: "#000000", flex: 1 },

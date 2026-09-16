@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { TelaEmBreve } from "@/components/TelaEmBreve";
 import { CartaoProduto } from "@/features/lojas/components/CartaoProduto";
@@ -50,17 +51,21 @@ export default function TelaProdutosLoja() {
 
     if (carregando) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     if (erro && produtos.length === 0) {
         return (
-            <View style={estilos.conteudo}>
-                <MensagemErro mensagem={erro} />
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudo}>
+                    <MensagemErro mensagem={erro} />
+                </View>
+            </FundoPastel>
         );
     }
 
@@ -75,27 +80,31 @@ export default function TelaProdutosLoja() {
     }
 
     return (
-        <FlatList
-            columnWrapperStyle={estilos.linha}
-            contentContainerStyle={estilos.lista}
-            data={produtos}
-            keyExtractor={(item) => String(item.id)}
-            numColumns={2}
-            refreshControl={
-                <RefreshControl
-                    colors={[cores.primaria]}
-                    onRefresh={() => void carregar(true)}
-                    refreshing={atualizando}
-                />
-            }
-            renderItem={({ item }) => <CartaoProduto produto={item} />}
-        />
+        <FundoPastel>
+            <FlatList
+                columnWrapperStyle={estilos.linha}
+                contentContainerStyle={estilos.lista}
+                data={produtos}
+                keyExtractor={(item) => String(item.id)}
+                numColumns={2}
+                refreshControl={
+                    <RefreshControl
+                        colors={[cores.primaria]}
+                        onRefresh={() => void carregar(true)}
+                        refreshing={atualizando}
+                    />
+                }
+                renderItem={({ item }) => <CartaoProduto produto={item} />}
+                style={estilos.listaScroll}
+            />
+        </FundoPastel>
     );
 }
 
 const estilos = StyleSheet.create({
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
-    conteudo: { backgroundColor: cores.fundo, flex: 1, padding: 20 },
-    lista: { backgroundColor: cores.fundo, flexGrow: 1, padding: 16 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
+    conteudo: { flex: 1, padding: 20 },
+    listaScroll: { backgroundColor: "transparent", flex: 1 },
+    lista: { flexGrow: 1, padding: 16 },
     linha: { gap: 12, justifyContent: "space-between", marginBottom: 12 },
 });

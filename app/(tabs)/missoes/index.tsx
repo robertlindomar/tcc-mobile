@@ -10,6 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { CartaoMissaoDisponivel } from "@/features/missoes/components/CartaoMissaoDisponivel";
 import { ItemMissaoConcluida } from "@/features/missoes/components/ItemMissaoConcluida";
@@ -57,58 +58,65 @@ export default function TelaMissoes() {
 
     if (carregando) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     return (
-        <ScrollView
-            contentContainerStyle={estilos.conteudo}
-            refreshControl={
-                <RefreshControl
-                    colors={[cores.primaria]}
-                    onRefresh={() => void carregar(true)}
-                    refreshing={atualizando}
-                />
-            }
-        >
-            <Pressable
-                accessibilityLabel="Escanear QR da missão"
-                accessibilityRole="button"
-                onPress={() => router.push("/missoes/escanear")}
-                style={({ pressed }) => [estilos.botaoEscanear, pressed && estilos.pressionado]}
+        <FundoPastel>
+            <ScrollView
+                contentContainerStyle={estilos.conteudo}
+                refreshControl={
+                    <RefreshControl
+                        colors={[cores.primaria]}
+                        onRefresh={() => void carregar(true)}
+                        refreshing={atualizando}
+                    />
+                }
+                style={estilos.scroll}
             >
-                <Ionicons color="#FFFFFF" name="qr-code-outline" size={22} />
-                <Text style={estilos.textoBotaoEscanear}>Escanear QR</Text>
-            </Pressable>
+                <Pressable
+                    accessibilityLabel="Escanear QR da missão"
+                    accessibilityRole="button"
+                    onPress={() => router.push("/missoes/escanear")}
+                    style={({ pressed }) => [estilos.botaoEscanear, pressed && estilos.pressionado]}
+                >
+                    <Ionicons color="#FFFFFF" name="qr-code-outline" size={22} />
+                    <Text style={estilos.textoBotaoEscanear}>Escanear QR</Text>
+                </Pressable>
 
-            <MensagemErro mensagem={erro} />
+                <MensagemErro mensagem={erro} />
 
-            <Secao titulo="Disponíveis">
-                {disponiveis.length === 0 ? (
-                    <Text style={estilos.vazio}>
-                        Nenhuma missão disponível no momento. Visite uma loja participante para descobrir
-                        novas missões.
-                    </Text>
-                ) : (
-                    disponiveis.map((missao) => (
-                        <CartaoMissaoDisponivel key={`${missao.lojistaId}-${missao.id}`} missao={missao} />
-                    ))
-                )}
-            </Secao>
+                <Secao titulo="Disponíveis">
+                    {disponiveis.length === 0 ? (
+                        <Text style={estilos.vazio}>
+                            Nenhuma missão disponível no momento. Visite uma loja participante para descobrir
+                            novas missões.
+                        </Text>
+                    ) : (
+                        disponiveis.map((missao) => (
+                            <CartaoMissaoDisponivel key={`${missao.lojistaId}-${missao.id}`} missao={missao} />
+                        ))
+                    )}
+                </Secao>
 
-            <Secao titulo="Concluídas">
-                {concluidas.length === 0 ? (
-                    <Text style={estilos.vazio}>Nenhuma missão concluída ainda. Escaneie um QR na loja!</Text>
-                ) : (
-                    concluidas.map((conclusao) => (
-                        <ItemMissaoConcluida key={conclusao.id} conclusao={conclusao} />
-                    ))
-                )}
-            </Secao>
-        </ScrollView>
+                <Secao titulo="Concluídas">
+                    {concluidas.length === 0 ? (
+                        <Text style={estilos.vazio}>
+                            Nenhuma missão concluída ainda. Escaneie um QR na loja!
+                        </Text>
+                    ) : (
+                        concluidas.map((conclusao) => (
+                            <ItemMissaoConcluida key={conclusao.id} conclusao={conclusao} />
+                        ))
+                    )}
+                </Secao>
+            </ScrollView>
+        </FundoPastel>
     );
 }
 
@@ -122,16 +130,22 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 }
 
 const estilos = StyleSheet.create({
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
-    conteudo: { backgroundColor: cores.fundo, gap: 20, padding: 20, paddingBottom: 36 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
+    scroll: { backgroundColor: "transparent", flex: 1 },
+    conteudo: { gap: 20, padding: 20, paddingBottom: 36 },
     botaoEscanear: {
         alignItems: "center",
         backgroundColor: cores.primaria,
-        borderRadius: 16,
+        borderRadius: 999,
+        elevation: 2,
         flexDirection: "row",
         gap: 10,
         justifyContent: "center",
         paddingVertical: 16,
+        shadowColor: cores.sidebar,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 8,
     },
     pressionado: { opacity: 0.88 },
     textoBotaoEscanear: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },

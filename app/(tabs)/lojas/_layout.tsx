@@ -6,7 +6,7 @@ export default function LayoutLojas() {
         <Stack
             screenOptions={{
                 headerShadowVisible: false,
-                headerStyle: { backgroundColor: cores.superficie },
+                headerStyle: { backgroundColor: cores.fundo },
                 headerTitleStyle: { color: cores.texto, fontWeight: "700" },
                 headerTintColor: cores.primaria,
                 contentStyle: { backgroundColor: cores.fundo },

@@ -16,8 +16,8 @@ export function MensagemErro({ mensagem }: { mensagem: string | null }) {
 const estilos = StyleSheet.create({
     container: {
         backgroundColor: cores.perigoSuave,
-        borderRadius: 10,
-        padding: 12,
+        borderRadius: 16,
+        padding: 14,
     },
     texto: { color: cores.perigo, fontSize: 14, lineHeight: 20 },
 });

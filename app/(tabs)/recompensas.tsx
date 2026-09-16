@@ -7,6 +7,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { CartaoRecompensa } from "@/features/recompensas/components/CartaoRecompensa";
 import { ItemResgate } from "@/features/recompensas/components/ItemResgate";
@@ -76,55 +77,60 @@ export default function TelaRecompensas() {
 
     if (carregando) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     return (
         <>
-            <ScrollView
-                contentContainerStyle={estilos.conteudo}
-                refreshControl={
-                    <RefreshControl
-                        colors={[cores.primaria]}
-                        onRefresh={() => void carregar(true)}
-                        refreshing={atualizando}
-                    />
-                }
-            >
-                <ResumoSaldoPontos nivel={estado.nivel} pontos={estado.pontos} />
-                <MensagemErro mensagem={erro} />
+            <FundoPastel>
+                <ScrollView
+                    contentContainerStyle={estilos.conteudo}
+                    refreshControl={
+                        <RefreshControl
+                            colors={[cores.primaria]}
+                            onRefresh={() => void carregar(true)}
+                            refreshing={atualizando}
+                        />
+                    }
+                    style={estilos.scroll}
+                >
+                    <ResumoSaldoPontos nivel={estado.nivel} pontos={estado.pontos} />
+                    <MensagemErro mensagem={erro} />
 
-                <Secao titulo="Disponíveis">
-                    {estado.recompensas.length === 0 ? (
-                        <Text style={estilos.vazio}>
-                            Nenhuma recompensa disponível no momento.
-                        </Text>
-                    ) : (
-                        estado.recompensas.map((recompensa) => (
-                            <CartaoRecompensa
-                                key={recompensa.id}
-                                onResgatar={iniciarResgate}
-                                pontos={estado.pontos}
-                                recompensa={recompensa}
-                                resgatando={resgatandoId === recompensa.id}
-                            />
-                        ))
-                    )}
-                </Secao>
+                    <Secao titulo="Disponíveis">
+                        {estado.recompensas.length === 0 ? (
+                            <Text style={estilos.vazio}>
+                                Nenhuma recompensa disponível no momento.
+                            </Text>
+                        ) : (
+                            estado.recompensas.map((recompensa) => (
+                                <CartaoRecompensa
+                                    key={recompensa.id}
+                                    onResgatar={iniciarResgate}
+                                    pontos={estado.pontos}
+                                    recompensa={recompensa}
+                                    resgatando={resgatandoId === recompensa.id}
+                                />
+                            ))
+                        )}
+                    </Secao>
 
-                <Secao titulo="Meus resgates">
-                    {resgates.length === 0 ? (
-                        <Text style={estilos.vazio}>Nenhum resgate ainda.</Text>
-                    ) : (
-                        resgates.map((resgate) => (
-                            <ItemResgate key={resgate.id} resgate={resgate} />
-                        ))
-                    )}
-                </Secao>
-            </ScrollView>
+                    <Secao titulo="Meus resgates">
+                        {resgates.length === 0 ? (
+                            <Text style={estilos.vazio}>Nenhum resgate ainda.</Text>
+                        ) : (
+                            resgates.map((resgate) => (
+                                <ItemResgate key={resgate.id} resgate={resgate} />
+                            ))
+                        )}
+                    </Secao>
+                </ScrollView>
+            </FundoPastel>
 
             {recompensaPendente ? (
                 <ModalConfirmarResgate
@@ -150,11 +156,11 @@ function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
 const estilos = StyleSheet.create({
     centralizado: {
         alignItems: "center",
-        backgroundColor: cores.fundo,
         flex: 1,
         justifyContent: "center",
     },
-    conteudo: { backgroundColor: cores.fundo, gap: 18, padding: 20, paddingBottom: 36 },
+    scroll: { backgroundColor: "transparent", flex: 1 },
+    conteudo: { gap: 18, padding: 20, paddingBottom: 36 },
     secao: { gap: 10 },
     tituloSecao: { color: cores.texto, fontSize: 17, fontWeight: "800" },
     lista: { gap: 10 },

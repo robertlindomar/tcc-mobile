@@ -19,7 +19,7 @@ export function BotaoPrimario({
     estilo,
 }: Props) {
     const bloqueado = carregando || desabilitado;
-    const estiloVariante = estilos[variantes[ variante ]];
+    const estiloVariante = estilos[variantes[variante]];
 
     return (
         <Pressable
@@ -55,9 +55,10 @@ const variantes = {
 const estilos = StyleSheet.create({
     botao: {
         alignItems: "center",
-        borderRadius: 14,
+        borderRadius: 16,
         justifyContent: "center",
         minHeight: 52,
+        overflow: "hidden",
         paddingHorizontal: 20,
     },
     primario: { backgroundColor: cores.primaria },
@@ -65,7 +66,8 @@ const estilos = StyleSheet.create({
     secundario: {
         backgroundColor: cores.superficie,
         borderColor: cores.primaria,
-        borderWidth: 1,
+        borderRadius: 999,
+        borderWidth: 1.5,
     },
     botaoDesabilitado: { opacity: 0.55 },
     botaoPressionado: { opacity: 0.84 },

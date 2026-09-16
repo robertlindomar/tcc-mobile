@@ -20,23 +20,28 @@ export function CartaoRecompensa({ recompensa, pontos, resgatando, onResgatar }:
 
     return (
         <View style={estilos.cartao}>
-            <View style={estilos.texto}>
-                <Text style={estilos.nome}>{recompensa.nome}</Text>
-                {recompensa.nomeLoja ? (
-                    <View style={estilos.linhaLoja}>
-                        <Ionicons color={cores.textoSecundario} name="storefront-outline" size={14} />
-                        <Text style={estilos.loja}>{recompensa.nomeLoja}</Text>
-                    </View>
-                ) : null}
-                {recompensa.descricao ? (
-                    <Text style={estilos.descricao}>{recompensa.descricao}</Text>
-                ) : null}
-                <Text style={estilos.meta}>
-                    {recompensa.estoque === null
-                        ? "Estoque ilimitado"
-                        : `${recompensa.estoque} restantes`}
-                    {recompensa.dataFimCivil ? ` · válida até ${recompensa.dataFimCivil}` : ""}
-                </Text>
+            <View style={estilos.cabecalho}>
+                <View style={estilos.icone}>
+                    <Ionicons color={cores.primaria} name="storefront-outline" size={20} />
+                </View>
+                <View style={estilos.texto}>
+                    <Text style={estilos.nome}>{recompensa.nome}</Text>
+                    {recompensa.nomeLoja ? (
+                        <View style={estilos.linhaLoja}>
+                            <Ionicons color={cores.textoSecundario} name="storefront-outline" size={14} />
+                            <Text style={estilos.loja}>{recompensa.nomeLoja}</Text>
+                        </View>
+                    ) : null}
+                    {recompensa.descricao ? (
+                        <Text style={estilos.descricao}>{recompensa.descricao}</Text>
+                    ) : null}
+                    <Text style={estilos.meta}>
+                        {recompensa.estoque === null
+                            ? "Estoque ilimitado"
+                            : `${recompensa.estoque} restantes`}
+                        {recompensa.dataFimCivil ? ` · válida até ${recompensa.dataFimCivil}` : ""}
+                    </Text>
+                </View>
             </View>
             <View style={estilos.rodape}>
                 <View style={estilos.seloPontos}>
@@ -65,12 +70,21 @@ const estilos = StyleSheet.create({
     cartao: {
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 16,
+        borderRadius: 20,
         borderWidth: 1,
-        gap: 12,
-        padding: 14,
+        gap: 14,
+        padding: 16,
     },
-    texto: { gap: 4 },
+    cabecalho: { flexDirection: "row", gap: 12 },
+    icone: {
+        alignItems: "center",
+        backgroundColor: cores.primariaSuave,
+        borderRadius: 12,
+        height: 44,
+        justifyContent: "center",
+        width: 44,
+    },
+    texto: { flex: 1, gap: 4 },
     nome: { color: cores.texto, fontSize: 15, fontWeight: "700" },
     linhaLoja: { alignItems: "center", flexDirection: "row", gap: 4 },
     loja: { color: cores.textoSecundario, fontSize: 13 },
@@ -79,17 +93,17 @@ const estilos = StyleSheet.create({
     rodape: { alignItems: "center", flexDirection: "row", gap: 10 },
     seloPontos: {
         backgroundColor: cores.ouroSuave,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
     },
     textoPontos: { color: cores.ouro, fontSize: 12, fontWeight: "800" },
     botao: {
         backgroundColor: cores.primaria,
-        borderRadius: 10,
+        borderRadius: 16,
         flex: 1,
         paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingVertical: 12,
     },
     botaoDesabilitado: { backgroundColor: cores.borda },
     pressionado: { opacity: 0.85 },

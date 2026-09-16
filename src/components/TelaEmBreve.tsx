@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { cores } from "@/styles/tema";
 
 type Props = {
@@ -10,25 +11,27 @@ type Props = {
 
 export function TelaEmBreve({ icone, titulo, descricao }: Props) {
     return (
-        <View style={estilos.tela}>
-            <View style={estilos.cartao}>
-                <View style={estilos.icone}>
-                    <Ionicons color={cores.primaria} name={icone} size={28} />
+        <FundoPastel>
+            <View style={estilos.tela}>
+                <View style={estilos.cartao}>
+                    <View style={estilos.icone}>
+                        <Ionicons color={cores.primaria} name={icone} size={28} />
+                    </View>
+                    <Text style={estilos.titulo}>{titulo}</Text>
+                    <Text style={estilos.descricao}>{descricao}</Text>
                 </View>
-                <Text style={estilos.titulo}>{titulo}</Text>
-                <Text style={estilos.descricao}>{descricao}</Text>
             </View>
-        </View>
+        </FundoPastel>
     );
 }
 
 const estilos = StyleSheet.create({
-    tela: { backgroundColor: cores.fundo, flex: 1, padding: 20 },
+    tela: { flex: 1, padding: 20 },
     cartao: {
         alignItems: "center",
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 18,
+        borderRadius: 20,
         borderWidth: 1,
         gap: 10,
         paddingHorizontal: 22,

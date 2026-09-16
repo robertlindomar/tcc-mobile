@@ -10,6 +10,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { TelaEmBreve } from "@/components/TelaEmBreve";
 import { listarLojasCatalogo } from "@/features/lojas/servicoLoja";
@@ -49,17 +50,21 @@ export default function TelaLojas() {
 
     if (carregando) {
         return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
+            <FundoPastel>
+                <View style={estilos.centralizado}>
+                    <ActivityIndicator color={cores.primaria} size="large" />
+                </View>
+            </FundoPastel>
         );
     }
 
     if (erro && lojas.length === 0) {
         return (
-            <View style={estilos.conteudo}>
-                <MensagemErro mensagem={erro} />
-            </View>
+            <FundoPastel>
+                <View style={estilos.conteudo}>
+                    <MensagemErro mensagem={erro} />
+                </View>
+            </FundoPastel>
         );
     }
 
@@ -74,57 +79,61 @@ export default function TelaLojas() {
     }
 
     return (
-        <FlatList
-            contentContainerStyle={estilos.lista}
-            data={lojas}
-            keyExtractor={(item) => String(item.id)}
-            refreshControl={
-                <RefreshControl
-                    colors={[cores.primaria]}
-                    onRefresh={() => void carregar(true)}
-                    refreshing={atualizando}
-                />
-            }
-            renderItem={({ item }) => (
-                <Pressable
-                    accessibilityHint="Abre os produtos desta loja"
-                    accessibilityLabel={item.nomeFantasia}
-                    accessibilityRole="button"
-                    onPress={() =>
-                        router.push({
-                            pathname: "/lojas/[id]",
-                            params: { id: String(item.id), nome: item.nomeFantasia },
-                        })
-                    }
-                    style={({ pressed }) => [estilos.cartao, pressed && estilos.cartaoPressionado]}
-                >
-                    <View style={estilos.icone}>
-                        <Ionicons color={cores.primaria} name="storefront-outline" size={22} />
-                    </View>
-                    <View style={estilos.texto}>
-                        <Text style={estilos.nome}>{item.nomeFantasia}</Text>
-                        <Text style={estilos.subtitulo}>
-                            {item.distanciaKm != null
-                                ? formatarDistancia(item.distanciaKm)
-                                : "Ver produtos"}
-                        </Text>
-                    </View>
-                    <Ionicons color={cores.textoSecundario} name="chevron-forward" size={20} />
-                </Pressable>
-            )}
-        />
+        <FundoPastel>
+            <FlatList
+                contentContainerStyle={estilos.lista}
+                data={lojas}
+                keyExtractor={(item) => String(item.id)}
+                refreshControl={
+                    <RefreshControl
+                        colors={[cores.primaria]}
+                        onRefresh={() => void carregar(true)}
+                        refreshing={atualizando}
+                    />
+                }
+                renderItem={({ item }) => (
+                    <Pressable
+                        accessibilityHint="Abre os produtos desta loja"
+                        accessibilityLabel={item.nomeFantasia}
+                        accessibilityRole="button"
+                        onPress={() =>
+                            router.push({
+                                pathname: "/lojas/[id]",
+                                params: { id: String(item.id), nome: item.nomeFantasia },
+                            })
+                        }
+                        style={({ pressed }) => [estilos.cartao, pressed && estilos.cartaoPressionado]}
+                    >
+                        <View style={estilos.icone}>
+                            <Ionicons color={cores.primaria} name="storefront-outline" size={22} />
+                        </View>
+                        <View style={estilos.texto}>
+                            <Text style={estilos.nome}>{item.nomeFantasia}</Text>
+                            <Text style={estilos.subtitulo}>
+                                {item.distanciaKm != null
+                                    ? formatarDistancia(item.distanciaKm)
+                                    : "Ver produtos"}
+                            </Text>
+                        </View>
+                        <Ionicons color={cores.textoSecundario} name="chevron-forward" size={20} />
+                    </Pressable>
+                )}
+                style={estilos.listaScroll}
+            />
+        </FundoPastel>
     );
 }
 
 const estilos = StyleSheet.create({
-    centralizado: { alignItems: "center", backgroundColor: cores.fundo, flex: 1, justifyContent: "center" },
-    conteudo: { backgroundColor: cores.fundo, flex: 1, padding: 20 },
-    lista: { backgroundColor: cores.fundo, flexGrow: 1, gap: 12, padding: 20 },
+    centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
+    conteudo: { flex: 1, padding: 20 },
+    listaScroll: { backgroundColor: "transparent", flex: 1 },
+    lista: { flexGrow: 1, gap: 12, padding: 20 },
     cartao: {
         alignItems: "center",
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 18,
+        borderRadius: 20,
         borderWidth: 1,
         flexDirection: "row",
         gap: 14,
@@ -134,7 +143,7 @@ const estilos = StyleSheet.create({
     icone: {
         alignItems: "center",
         backgroundColor: cores.primariaSuave,
-        borderRadius: 12,
+        borderRadius: 14,
         height: 48,
         justifyContent: "center",
         width: 48,

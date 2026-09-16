@@ -58,7 +58,7 @@ const estilos = StyleSheet.create({
     cartao: {
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 16,
+        borderRadius: 20,
         borderWidth: 1,
         overflow: "hidden",
         width: 168,
