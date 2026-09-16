@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { MensagemErro } from "@/components/MensagemErro";
 import { listarCampanhasVigentes, processarNfce } from "@/features/nfce/servicoNfce";
+import { parsearQrNfce } from "@/features/nfce/parsearQrNfce";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
 import { formatarDataCivil } from "@/utils/formatarDataCivil";
@@ -31,7 +32,9 @@ function mensagemSucesso(resposta: RespostaProcessamentoNfce): string {
         `Você ganhou ${tickets}.`,
         `Residual: ${formatarMoeda(resposta.residualApos)}.`,
         `Total na campanha: ${resposta.ticketsTotaisCampanha}.`,
-        resposta.modoSimulado ? "(Demo — não é consulta SEFAZ)" : "",
+        resposta.provider === "teste"
+            ? "Dados obtidos na consulta pública da SEFAZ-SP."
+            : resposta.modoSimulado ? "(Demo — não é consulta SEFAZ)" : "",
     ]
         .filter(Boolean)
         .join("\n");
@@ -65,7 +68,8 @@ export default function TelaAbaNfce() {
     }, []);
 
     useEffect(() => {
-        void carregarCampanhas();
+        const agendamento = setTimeout(() => void carregarCampanhas(), 0);
+        return () => clearTimeout(agendamento);
     }, [carregarCampanhas]);
 
     if (carregandoCampanhas) {
@@ -252,61 +256,109 @@ function FallbackWeb({ campanhaId }: { campanhaId: number }) {
 function EscanearNativo({ campanhaId }: { campanhaId: number }) {
     const [permissao, solicitarPermissao] = useCameraPermissions();
     const [processando, setProcessando] = useState(false);
+    const [scannerAtivo, setScannerAtivo] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+    const [sucesso, setSucesso] = useState<string | null>(null);
     const ultimaLeituraRef = useRef(0);
+    const processandoRef = useRef(false);
     const campanhaIdRef = useRef(campanhaId);
-    campanhaIdRef.current = campanhaId;
+
+    useEffect(() => {
+        campanhaIdRef.current = campanhaId;
+    }, [campanhaId]);
 
     const processarLeitura = useCallback(async (dados: string) => {
         const agora = Date.now();
-        if (processando || agora - ultimaLeituraRef.current < INTERVALO_DEBOUNCE_MS) {
+        if (processandoRef.current || agora - ultimaLeituraRef.current < INTERVALO_DEBOUNCE_MS) {
             return;
         }
 
-        const payload = dados.trim();
-        if (!payload) {
+        let payload: string;
+        try {
+            payload = parsearQrNfce(dados).payloadQr;
+        } catch (causa) {
+            setScannerAtivo(false);
+            setErro(normalizarErro(causa));
             return;
         }
 
         ultimaLeituraRef.current = agora;
+        processandoRef.current = true;
+        setScannerAtivo(false);
         setProcessando(true);
         setErro(null);
+        setSucesso(null);
 
         try {
             const resposta = await processarNfce({
                 payloadQr: payload,
                 campanhaId: campanhaIdRef.current,
             });
-            Alert.alert("Tickets creditados!", mensagemSucesso(resposta));
+            const mensagem = mensagemSucesso(resposta);
+            setSucesso(mensagem);
+            Alert.alert("Tickets creditados!", mensagem);
         } catch (causa) {
             setErro(normalizarErro(causa));
         } finally {
+            processandoRef.current = false;
             setProcessando(false);
         }
-    }, [processando]);
+    }, []);
 
-    if (!permissao) {
-        return (
-            <View style={estilos.centralizado}>
-                <ActivityIndicator color={cores.primaria} size="large" />
-            </View>
-        );
+    async function abrirScanner() {
+        setErro(null);
+        setSucesso(null);
+        const permissaoAtual = permissao?.granted
+            ? permissao
+            : await solicitarPermissao();
+        if (!permissaoAtual.granted) {
+            setErro("Permita o acesso à câmera para escanear a NFC-e.");
+            return;
+        }
+        ultimaLeituraRef.current = 0;
+        setScannerAtivo(true);
     }
 
-    if (!permissao.granted) {
+    if (!scannerAtivo) {
         return (
-            <View style={estilos.conteudoPermissao}>
-                <Ionicons color={cores.primaria} name="camera-outline" size={48} />
-                <Text style={estilos.tituloPermissao}>Acesso à câmera</Text>
-                <Text style={estilos.textoPermissao}>
-                    Precisamos da câmera para ler o QR code da nota fiscal (NFC-e).
-                </Text>
+            <View style={estilos.conteudoScannerFechado}>
+                {processando ? (
+                    <>
+                        <ActivityIndicator color={cores.primaria} size="large" />
+                        <Text style={estilos.tituloPermissao}>Consultando NFC-e…</Text>
+                        <Text style={estilos.textoPermissao}>
+                            Aguarde a resposta da SEFAZ. A câmera já foi desligada.
+                        </Text>
+                    </>
+                ) : sucesso ? (
+                    <>
+                        <Ionicons color="#15803D" name="checkmark-circle" size={56} />
+                        <Text style={estilos.tituloSucesso}>NFC-e processada com sucesso</Text>
+                        <Text style={estilos.textoResultado}>{sucesso}</Text>
+                    </>
+                ) : (
+                    <>
+                        <Ionicons color={cores.primaria} name="qr-code-outline" size={52} />
+                        <Text style={estilos.tituloPermissao}>
+                            {erro ? "Não foi possível processar a NFC-e" : "Scanner NFC-e"}
+                        </Text>
+                        <Text style={estilos.textoPermissao}>
+                            {erro
+                                ? "Confira a mensagem abaixo e tente novamente."
+                                : "A câmera ficará aberta somente até identificar um QR code."}
+                        </Text>
+                    </>
+                )}
+                <MensagemErro mensagem={erro} />
                 <Pressable
                     accessibilityRole="button"
-                    onPress={() => void solicitarPermissao()}
+                    disabled={processando}
+                    onPress={() => void abrirScanner()}
                     style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
                 >
-                    <Text style={estilos.textoBotaoAcao}>Permitir câmera</Text>
+                    <Text style={estilos.textoBotaoAcao}>
+                        {erro ? "Tentar novamente" : sucesso ? "Escanear outra NFC-e" : "Escanear NFC-e"}
+                    </Text>
                 </Pressable>
             </View>
         );
@@ -316,7 +368,7 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
         <View style={estilos.containerCamera}>
             <CameraView
                 barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                onBarcodeScanned={({ data }) => void processarLeitura(data)}
+                onBarcodeScanned={scannerAtivo ? ({ data }) => void processarLeitura(data) : undefined}
                 style={StyleSheet.absoluteFill}
             />
             <View style={estilos.overlay}>
@@ -328,7 +380,6 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
                         <Text style={estilos.textoProcessando}>Processando NFC-e…</Text>
                     </View>
                 ) : null}
-                <MensagemErro mensagem={erro} />
             </View>
         </View>
     );
@@ -413,8 +464,18 @@ const estilos = StyleSheet.create({
         justifyContent: "center",
         padding: 24,
     },
+    conteudoScannerFechado: {
+        alignItems: "center",
+        backgroundColor: cores.fundo,
+        flex: 1,
+        gap: 12,
+        justifyContent: "center",
+        padding: 24,
+    },
     tituloPermissao: { color: cores.texto, fontSize: 20, fontWeight: "800" },
+    tituloSucesso: { color: "#15803D", fontSize: 20, fontWeight: "800", textAlign: "center" },
     textoPermissao: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
+    textoResultado: { color: cores.texto, fontSize: 15, lineHeight: 22, textAlign: "center" },
     containerCamera: { backgroundColor: "#000000", flex: 1 },
     overlay: {
         ...StyleSheet.absoluteFill,

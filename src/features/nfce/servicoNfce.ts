@@ -11,6 +11,7 @@ export async function processarNfce(dados: {
 }): Promise<RespostaProcessamentoNfce> {
     return requisitar<RespostaProcessamentoNfce>("/nfce/processar", {
         metodo: "POST",
+        tempoLimiteMs: 30_000,
         corpo: {
             payloadQr: dados.payloadQr,
             campanhaId: dados.campanhaId,

@@ -26,6 +26,7 @@ function mensagemHttp(
     mensagemApi?: string,
     disponivelEm?: string | null,
     repetivel?: boolean | null,
+    codigo?: string,
 ): string {
     if (status === 401) {
         return "E-mail ou senha inválidos.";
@@ -41,6 +42,19 @@ function mensagemHttp(
     if (mensagemApi === MENSAGEM_MISSAO_PERIODO_API || repetivel === true) {
         return mensagemMissaoRecorrente(disponivelEm);
     }
+
+    const mensagensNfcePorCodigo: Record<string, string> = {
+        NFCE_JA_UTILIZADA: "Esta nota fiscal já foi utilizada.",
+        NFCE_FORA_PERIODO: "A data da compra está fora do período da campanha.",
+        NFCE_LOJISTA_NAO_PARTICIPANTE: "Esta loja não participa desta campanha.",
+        NFCE_LOJISTA_NAO_APROVADO: "Esta loja ainda não está aprovada para a campanha.",
+        NFCE_CONSULTA_PUBLICA_INVALIDA:
+            "A SEFAZ não forneceu todos os dados desta NFC-e. Tente novamente.",
+        NFCE_CONSULTA_CAPTCHA:
+            "A consulta desta NFC-e exige confirmação no site da SEFAZ.",
+        SEFAZ_HOST_NAO_PERMITIDO: "O endereço deste QR NFC-e não é reconhecido.",
+    };
+    if (codigo && mensagensNfcePorCodigo[codigo]) return mensagensNfcePorCodigo[codigo];
 
     const mensagensConhecidas: Record<string, string> = {
         "Email ja cadastrado": "Este e-mail já está cadastrado.",
@@ -68,6 +82,13 @@ function mensagemHttp(
         "payloadQr e obrigatorio": "Informe o QR code da nota fiscal.",
         "Payload da NFC-e e obrigatorio": "Informe o QR code da nota fiscal.",
         "Nao foi possivel ler a NFC-e": "Não foi possível ler a NFC-e. Tente novamente.",
+        "Escaneie o QR ou informe seu link completo da SEFAZ-SP":
+            "Escaneie o QR completo impresso na NFC-e.",
+        "A pagina SEFAZ nao forneceu dados completos e validos desta NFC-e":
+            "A SEFAZ não forneceu todos os dados desta NFC-e. Tente novamente.",
+        "A consulta SEFAZ exige CAPTCHA; nao foi possivel obter os dados automaticamente":
+            "A consulta desta NFC-e exige confirmação no site da SEFAZ.",
+        "SEFAZ indisponivel": "A SEFAZ está indisponível. Tente novamente em instantes.",
     };
 
     if (mensagemApi && mensagensConhecidas[mensagemApi]) {
@@ -98,7 +119,13 @@ export function normalizarErro(erro: unknown): string {
         if (erro.tipo === "CONFIGURACAO") {
             return "A configuração da API está incompleta. Consulte o README do projeto.";
         }
-        return mensagemHttp(erro.status, erro.message, erro.disponivelEm, erro.repetivel);
+        return mensagemHttp(
+            erro.status,
+            erro.message,
+            erro.disponivelEm,
+            erro.repetivel,
+            erro.codigo,
+        );
     }
 
     if (erro instanceof ErroDominio) {

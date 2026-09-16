@@ -8,9 +8,11 @@ type OpcoesRequisicao = {
     metodo?: MetodoHttp;
     corpo?: unknown;
     token?: string;
+    tempoLimiteMs?: number;
 };
 
 type CorpoErro = {
+    codigo?: string;
     error?: string;
     disponivelEm?: string | null;
     frequencia?: string | null;
@@ -87,6 +89,14 @@ function extrairRepetivel(corpo: unknown): boolean | null | undefined {
     return undefined;
 }
 
+function extrairCodigo(corpo: unknown): string | undefined {
+    if (typeof corpo === "object" && corpo !== null && "codigo" in corpo) {
+        const { codigo } = corpo as CorpoErro;
+        return typeof codigo === "string" ? codigo : undefined;
+    }
+    return undefined;
+}
+
 export async function requisitar<T>(
     caminho: string,
     opcoes: OpcoesRequisicao = {},
@@ -102,7 +112,7 @@ export async function requisitar<T>(
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TEMPO_LIMITE_MS);
+    const timeout = setTimeout(() => controller.abort(), opcoes.tempoLimiteMs ?? TEMPO_LIMITE_MS);
 
     try {
         const token = opcoes.token ?? (await obterToken());
@@ -133,6 +143,7 @@ export async function requisitar<T>(
                 extrairDisponivelEm(corpo),
                 extrairFrequencia(corpo),
                 extrairRepetivel(corpo),
+                extrairCodigo(corpo),
             );
         }
 

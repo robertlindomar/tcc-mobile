@@ -8,6 +8,7 @@ export class ErroApi extends Error {
         readonly disponivelEm?: string | null,
         readonly frequencia?: string | null,
         readonly repetivel?: boolean | null,
+        readonly codigo?: string,
     ) {
         super(message);
         this.name = "ErroApi";

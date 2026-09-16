@@ -98,4 +98,12 @@ describe("normalizarErro", () => {
         expect(erroInvalidaSessao(new ErroApi("Servidor", "HTTP", 500))).toBe(false);
         expect(erroInvalidaSessao(new ErroApi("Rede", "REDE"))).toBe(false);
     });
+
+    it("mapeia NFC-e pelo código estável mesmo se a mensagem mudar", () => {
+        expect(
+            normalizarErro(
+                new ErroApi("mensagem qualquer", "HTTP", 400, undefined, undefined, undefined, "NFCE_FORA_PERIODO"),
+            ),
+        ).toBe("A data da compra está fora do período da campanha.");
+    });
 });
