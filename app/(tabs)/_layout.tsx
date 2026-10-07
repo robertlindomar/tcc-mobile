@@ -2,8 +2,11 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { cores } from "@/styles/tema";
 
+import { AvisosSorteio } from "@/features/sorteios/AvisosSorteio";
+
 export default function LayoutAbas() {
     return (
+        <>
         <Tabs
             screenOptions={{
                 headerShadowVisible: false,
@@ -83,5 +86,7 @@ export default function LayoutAbas() {
                 }}
             />
         </Tabs>
+        <AvisosSorteio />
+        </>
     );
 }
