@@ -18,6 +18,7 @@ import { obterLocalizacaoConsumidor } from "@/features/lojas/servicoLocalizacao"
 import { formatarDistancia } from "@/features/lojas/formatarDistancia";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
+import { LogoLoja } from "@/features/lojas/components/LogoLoja";
 import { LojaCatalogo } from "@/types/api";
 
 export default function TelaLojas() {
@@ -104,9 +105,7 @@ export default function TelaLojas() {
                         }
                         style={({ pressed }) => [estilos.cartao, pressed && estilos.cartaoPressionado]}
                     >
-                        <View style={estilos.icone}>
-                            <Ionicons color={cores.primaria} name="storefront-outline" size={22} />
-                        </View>
+                        <LogoLoja nome={item.nomeFantasia} urlLogo={item.urlLogo} />
                         <View style={estilos.texto}>
                             <Text style={estilos.nome}>{item.nomeFantasia}</Text>
                             <Text style={estilos.subtitulo}>
@@ -140,14 +139,6 @@ const estilos = StyleSheet.create({
         padding: 16,
     },
     cartaoPressionado: { opacity: 0.86 },
-    icone: {
-        alignItems: "center",
-        backgroundColor: cores.primariaSuave,
-        borderRadius: 14,
-        height: 48,
-        justifyContent: "center",
-        width: 48,
-    },
     texto: { flex: 1 },
     nome: { color: cores.texto, fontSize: 16, fontWeight: "700" },
     subtitulo: { color: cores.textoSecundario, fontSize: 13, marginTop: 3 },

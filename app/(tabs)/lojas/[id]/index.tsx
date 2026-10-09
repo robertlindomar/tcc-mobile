@@ -1,3 +1,4 @@
+import { LogoLoja } from "@/features/lojas/components/LogoLoja";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
@@ -182,9 +183,7 @@ export default function TelaDetalheLoja() {
             style={estilos.scroll}
         >
             <View style={estilos.identidade}>
-                <View style={estilos.iconeLoja}>
-                    <Ionicons color={cores.primaria} name="storefront" size={28} />
-                </View>
+                <LogoLoja nome={nomeExibido} urlLogo={loja?.urlLogo} tamanho={64} />
                 <View style={estilos.identidadeTexto}>
                     <Text style={estilos.nomeLoja}>{nomeExibido}</Text>
                     <Text style={estilos.subtituloLoja}>Loja participante</Text>
@@ -443,14 +442,6 @@ const estilos = StyleSheet.create({
     conteudo: { gap: 18, padding: 20, paddingBottom: 36 },
     acoesCabecalho: { flexDirection: "row", gap: 16, marginRight: 4 },
     identidade: { alignItems: "center", flexDirection: "row", gap: 14 },
-    iconeLoja: {
-        alignItems: "center",
-        backgroundColor: cores.primariaSuave,
-        borderRadius: 16,
-        height: 64,
-        justifyContent: "center",
-        width: 64,
-    },
     identidadeTexto: { flex: 1 },
     nomeLoja: { color: cores.texto, fontSize: 22, fontWeight: "800" },
     subtituloLoja: { color: cores.textoSecundario, fontSize: 14, marginTop: 4 },
