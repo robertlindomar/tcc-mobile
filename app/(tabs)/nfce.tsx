@@ -6,7 +6,6 @@ import {
     Alert,
     Platform,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -42,8 +41,7 @@ function mensagemSucesso(resposta: RespostaProcessamentoNfce): string {
 }
 
 export default function TelaAbaNfce() {
-    const [campanhas, setCampanhas] = useState<CampanhaVigente[]>([]);
-    const [campanhaId, setCampanhaId] = useState<number | null>(null);
+    const [campanha, setCampanha] = useState<CampanhaVigente | null>(null);
     const [carregandoCampanhas, setCarregandoCampanhas] = useState(true);
     const [erroCampanhas, setErroCampanhas] = useState<string | null>(null);
 
@@ -52,17 +50,10 @@ export default function TelaAbaNfce() {
         setErroCampanhas(null);
         try {
             const lista = await listarCampanhasVigentes();
-            setCampanhas(lista);
-            setCampanhaId((atual) => {
-                if (atual !== null && lista.some((c) => c.id === atual)) {
-                    return atual;
-                }
-                return lista.length === 1 ? lista[0]!.id : lista[0]?.id ?? null;
-            });
+            setCampanha(lista[0] ?? null);
         } catch (causa) {
             setErroCampanhas(normalizarErro(causa));
-            setCampanhas([]);
-            setCampanhaId(null);
+            setCampanha(null);
         } finally {
             setCarregandoCampanhas(false);
         }
@@ -100,7 +91,7 @@ export default function TelaAbaNfce() {
         );
     }
 
-    if (campanhas.length === 0 || campanhaId === null) {
+    if (!campanha) {
         return (
             <FundoPastel>
                 <View style={estilos.conteudoEstado}>
@@ -124,74 +115,28 @@ export default function TelaAbaNfce() {
     return (
         <FundoPastel>
             <View style={estilos.container}>
-                <SeletorCampanha
-                    campanhaId={campanhaId}
-                    campanhas={campanhas}
-                    onChange={setCampanhaId}
-                />
+                <CartaoCampanhaVigente campanha={campanha} />
                 {Platform.OS === "web" ? (
-                    <FallbackWeb campanhaId={campanhaId} />
+                    <FallbackWeb campanhaId={campanha.id} />
                 ) : (
-                    <EscanearNativo campanhaId={campanhaId} />
+                    <EscanearNativo campanhaId={campanha.id} />
                 )}
             </View>
         </FundoPastel>
     );
 }
 
-function SeletorCampanha({
-    campanhas,
-    campanhaId,
-    onChange,
-}: {
-    campanhas: CampanhaVigente[];
-    campanhaId: number;
-    onChange: (id: number) => void;
-}) {
-    if (campanhas.length === 1) {
-        const unica = campanhas[0]!;
-        return (
-            <View style={estilos.barraCampanha}>
-                <Text style={estilos.rotuloCampanha}>Campanha</Text>
-                <View style={[estilos.chip, estilos.chipAtivo, estilos.chipUnica]}>
-                    <Text style={[estilos.chipTitulo, estilos.chipTituloAtivo]}>{unica.nome}</Text>
-                    <Text style={[estilos.chipMeta, estilos.chipMetaAtivo]}>
-                        {formatarDataCivil(unica.dataInicioCivil)} – {formatarDataCivil(unica.dataFimCivil)} ·{" "}
-                        {formatarMoeda(unica.valorPorTicket)}/ticket
-                    </Text>
-                </View>
-            </View>
-        );
-    }
-
+function CartaoCampanhaVigente({ campanha }: { campanha: CampanhaVigente }) {
     return (
         <View style={estilos.barraCampanha}>
-            <Text style={estilos.rotuloCampanha}>Selecione a campanha</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={estilos.listaChips}>
-                {campanhas.map((campanha) => {
-                    const ativa = campanha.id === campanhaId;
-                    return (
-                        <Pressable
-                            key={campanha.id}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: ativa }}
-                            onPress={() => onChange(campanha.id)}
-                            style={({ pressed }) => [
-                                estilos.chip,
-                                ativa && estilos.chipAtivo,
-                                pressed && estilos.pressionado,
-                            ]}
-                        >
-                            <Text style={[estilos.chipTitulo, ativa && estilos.chipTituloAtivo]}>
-                                {campanha.nome}
-                            </Text>
-                            <Text style={[estilos.chipMeta, ativa && estilos.chipMetaAtivo]}>
-                                {formatarMoeda(campanha.valorPorTicket)}/ticket
-                            </Text>
-                        </Pressable>
-                    );
-                })}
-            </ScrollView>
+            <Text style={estilos.rotuloCampanha}>Campanha vigente</Text>
+            <View style={estilos.cartaoCampanha}>
+                <Text style={estilos.tituloCampanha}>{campanha.nome}</Text>
+                <Text style={estilos.metaCampanha}>
+                    {formatarDataCivil(campanha.dataInicioCivil)} – {formatarDataCivil(campanha.dataFimCivil)} ·{" "}
+                    {formatarMoeda(campanha.valorPorTicket)}/ticket
+                </Text>
+            </View>
         </View>
     );
 }
@@ -413,22 +358,14 @@ const estilos = StyleSheet.create({
         paddingVertical: 12,
     },
     rotuloCampanha: { color: cores.texto, fontSize: 13, fontWeight: "700" },
-    listaChips: { gap: 8, paddingVertical: 2 },
-    chip: {
-        backgroundColor: cores.superficie,
-        borderColor: cores.borda,
+    cartaoCampanha: {
+        backgroundColor: cores.primaria,
         borderRadius: 16,
-        borderWidth: 1,
-        minWidth: 160,
         paddingHorizontal: 14,
         paddingVertical: 12,
     },
-    chipAtivo: { backgroundColor: cores.primaria, borderColor: cores.primaria },
-    chipUnica: { minWidth: undefined, width: "100%" },
-    chipTitulo: { color: cores.texto, fontSize: 14, fontWeight: "800" },
-    chipTituloAtivo: { color: "#FFFFFF" },
-    chipMeta: { color: cores.textoSecundario, fontSize: 12, marginTop: 2 },
-    chipMetaAtivo: { color: "rgba(255,255,255,0.9)" },
+    tituloCampanha: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+    metaCampanha: { color: "rgba(255,255,255,0.9)", fontSize: 12, marginTop: 2 },
     conteudoWeb: { flex: 1, gap: 12, padding: 20 },
     avisoWeb: {
         alignItems: "flex-start",
