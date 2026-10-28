@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { router } from "expo-router";
 import {
     ActivityIndicator,
@@ -17,18 +16,30 @@ import { ItemMissaoConcluida } from "@/features/missoes/components/ItemMissaoCon
 import {
     listarMissoesDisponiveis,
     ordenarHistoricoMissoes,
+    separarMissoesDiarias,
 } from "@/features/missoes/listarMissoesDisponiveis";
 import { listarHistoricoMissoes } from "@/features/missoes/servicoMissaoConsumidor";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
 import { MissaoConsumidor, MissaoDisponivel } from "@/types/api";
 
+type AbaMissoes = "diarias" | "outras" | "concluidas";
+
+const ABAS: { id: AbaMissoes; rotulo: string }[] = [
+    { id: "diarias", rotulo: "Diárias" },
+    { id: "outras", rotulo: "Outras" },
+    { id: "concluidas", rotulo: "Concluídas" },
+];
+
 export default function TelaMissoes() {
     const [disponiveis, setDisponiveis] = useState<MissaoDisponivel[]>([]);
     const [concluidas, setConcluidas] = useState<MissaoConsumidor[]>([]);
+    const [aba, setAba] = useState<AbaMissoes>("diarias");
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+
+    const { diarias, outras } = useMemo(() => separarMissoesDiarias(disponiveis), [disponiveis]);
 
     const carregar = useCallback(async (silencioso = false) => {
         if (silencioso) {
@@ -56,6 +67,10 @@ export default function TelaMissoes() {
         void carregar();
     }, [carregar]);
 
+    function realizarMissao() {
+        router.push("/missoes/escanear");
+    }
+
     if (carregando) {
         return (
             <FundoPastel>
@@ -66,8 +81,33 @@ export default function TelaMissoes() {
         );
     }
 
+    const contagem: Record<AbaMissoes, number> = {
+        diarias: diarias.length,
+        outras: outras.length,
+        concluidas: concluidas.length,
+    };
+
     return (
         <FundoPastel>
+            <View accessibilityRole="tablist" style={estilos.abas}>
+                {ABAS.map((item) => {
+                    const ativa = item.id === aba;
+                    return (
+                        <Pressable
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected: ativa }}
+                            key={item.id}
+                            onPress={() => setAba(item.id)}
+                            style={[estilos.aba, ativa && estilos.abaAtiva]}
+                        >
+                            <Text style={[estilos.textoAba, ativa && estilos.textoAbaAtiva]}>
+                                {item.rotulo} ({contagem[item.id]})
+                            </Text>
+                        </Pressable>
+                    );
+                })}
+            </View>
+
             <ScrollView
                 contentContainerStyle={estilos.conteudo}
                 refreshControl={
@@ -79,78 +119,91 @@ export default function TelaMissoes() {
                 }
                 style={estilos.scroll}
             >
-                <Pressable
-                    accessibilityLabel="Escanear QR da missão"
-                    accessibilityRole="button"
-                    onPress={() => router.push("/missoes/escanear")}
-                    style={({ pressed }) => [estilos.botaoEscanear, pressed && estilos.pressionado]}
-                >
-                    <Ionicons color="#FFFFFF" name="qr-code-outline" size={22} />
-                    <Text style={estilos.textoBotaoEscanear}>Escanear QR</Text>
-                </Pressable>
-
                 <MensagemErro mensagem={erro} />
 
-                <Secao titulo="Disponíveis">
-                    {disponiveis.length === 0 ? (
-                        <Text style={estilos.vazio}>
-                            Nenhuma missão disponível no momento. Visite uma loja participante para descobrir
-                            novas missões.
-                        </Text>
-                    ) : (
-                        disponiveis.map((missao) => (
-                            <CartaoMissaoDisponivel key={`${missao.lojistaId}-${missao.id}`} missao={missao} />
-                        ))
-                    )}
-                </Secao>
+                {aba === "diarias" ? (
+                    <ListaDisponiveis
+                        missoes={diarias}
+                        onRealizar={realizarMissao}
+                        vazio="Nenhuma missão diária disponível no momento."
+                    />
+                ) : null}
 
-                <Secao titulo="Concluídas">
-                    {concluidas.length === 0 ? (
+                {aba === "outras" ? (
+                    <ListaDisponiveis
+                        missoes={outras}
+                        onRealizar={realizarMissao}
+                        vazio="Nenhuma outra missão disponível no momento. Visite uma loja participante para descobrir novas missões."
+                    />
+                ) : null}
+
+                {aba === "concluidas" ? (
+                    concluidas.length === 0 ? (
                         <Text style={estilos.vazio}>
-                            Nenhuma missão concluída ainda. Escaneie um QR na loja!
+                            Nenhuma missão concluída ainda. Escolha uma missão e toque em Realizar missão!
                         </Text>
                     ) : (
-                        concluidas.map((conclusao) => (
-                            <ItemMissaoConcluida key={conclusao.id} conclusao={conclusao} />
-                        ))
-                    )}
-                </Secao>
+                        <View style={estilos.lista}>
+                            {concluidas.map((conclusao) => (
+                                <ItemMissaoConcluida key={conclusao.id} conclusao={conclusao} />
+                            ))}
+                        </View>
+                    )
+                ) : null}
             </ScrollView>
         </FundoPastel>
     );
 }
 
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function ListaDisponiveis({
+    missoes,
+    onRealizar,
+    vazio,
+}: {
+    missoes: MissaoDisponivel[];
+    onRealizar: (missao: MissaoDisponivel) => void;
+    vazio: string;
+}) {
+    if (missoes.length === 0) {
+        return <Text style={estilos.vazio}>{vazio}</Text>;
+    }
     return (
-        <View style={estilos.secao}>
-            <Text style={estilos.tituloSecao}>{titulo}</Text>
-            <View style={estilos.lista}>{children}</View>
+        <View style={estilos.lista}>
+            {missoes.map((missao) => (
+                <CartaoMissaoDisponivel
+                    key={`${missao.lojistaId}-${missao.id}`}
+                    missao={missao}
+                    onRealizar={onRealizar}
+                />
+            ))}
         </View>
     );
 }
 
 const estilos = StyleSheet.create({
     centralizado: { alignItems: "center", flex: 1, justifyContent: "center" },
-    scroll: { backgroundColor: "transparent", flex: 1 },
-    conteudo: { gap: 20, padding: 20, paddingBottom: 36 },
-    botaoEscanear: {
-        alignItems: "center",
-        backgroundColor: cores.primaria,
+    abas: {
+        backgroundColor: cores.superficie,
+        borderColor: cores.borda,
         borderRadius: 999,
-        elevation: 2,
+        borderWidth: 1,
         flexDirection: "row",
-        gap: 10,
-        justifyContent: "center",
-        paddingVertical: 16,
-        shadowColor: cores.sidebar,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 8,
+        gap: 4,
+        marginHorizontal: 20,
+        marginTop: 12,
+        padding: 4,
     },
-    pressionado: { opacity: 0.88 },
-    textoBotaoEscanear: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-    secao: { gap: 10 },
-    tituloSecao: { color: cores.texto, fontSize: 17, fontWeight: "800" },
+    aba: {
+        alignItems: "center",
+        borderRadius: 999,
+        flex: 1,
+        paddingVertical: 10,
+    },
+    abaAtiva: { backgroundColor: cores.primaria },
+    textoAba: { color: cores.textoSecundario, fontSize: 13, fontWeight: "700" },
+    textoAbaAtiva: { color: "#FFFFFF" },
+    scroll: { backgroundColor: "transparent", flex: 1 },
+    conteudo: { gap: 16, padding: 20, paddingBottom: 36 },
     lista: { gap: 10 },
     vazio: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20 },
 });

@@ -35,6 +35,16 @@ export async function listarMissoesDisponiveis(): Promise<MissaoDisponivel[]> {
     return mesclarMissoesDisponiveis(lojas, missoesPorLoja);
 }
 
+export function separarMissoesDiarias(missoes: MissaoDisponivel[]): {
+    diarias: MissaoDisponivel[];
+    outras: MissaoDisponivel[];
+} {
+    return {
+        diarias: missoes.filter((missao) => missao.frequencia === "DIARIA"),
+        outras: missoes.filter((missao) => missao.frequencia !== "DIARIA"),
+    };
+}
+
 export function ordenarHistoricoMissoes<T extends { dataCriacao: string }>(lista: T[]): T[] {
     return [...lista].sort(
         (a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime(),

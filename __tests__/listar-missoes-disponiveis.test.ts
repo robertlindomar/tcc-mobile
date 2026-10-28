@@ -1,6 +1,7 @@
 import {
     mesclarMissoesDisponiveis,
     ordenarHistoricoMissoes,
+    separarMissoesDiarias,
 } from "@/features/missoes/listarMissoesDisponiveis";
 import { LojaCatalogo, MissaoCatalogo, MissaoConsumidor } from "@/types/api";
 
@@ -20,6 +21,7 @@ describe("mesclarMissoesDisponiveis", () => {
                         nome: "Visitar loja",
                         descricao: null,
                         pontoRecompensa: 50,
+                        frequencia: "DIARIA",
                         sistema: true,
                     },
                 ],
@@ -32,6 +34,7 @@ describe("mesclarMissoesDisponiveis", () => {
                         nome: "Comprar café",
                         descricao: "Na loja",
                         pontoRecompensa: 20,
+                        frequencia: "UMA_VEZ",
                         sistema: false,
                     },
                 ],
@@ -50,6 +53,20 @@ describe("mesclarMissoesDisponiveis", () => {
     it("ignora lojas sem missões", () => {
         const resultado = mesclarMissoesDisponiveis(lojas, new Map());
         expect(resultado).toEqual([]);
+    });
+});
+
+describe("separarMissoesDiarias", () => {
+    it("separa missões diárias das demais frequências", () => {
+        const base = { descricao: null, pontoRecompensa: 10, sistema: false, lojistaId: 1, nomeLoja: "Loja" };
+        const { diarias, outras } = separarMissoesDiarias([
+            { ...base, id: 1, nome: "Diária", frequencia: "DIARIA" },
+            { ...base, id: 2, nome: "Semanal", frequencia: "SEMANAL" },
+            { ...base, id: 3, nome: "Única", frequencia: "UMA_VEZ" },
+            { ...base, id: 4, nome: "Mensal", frequencia: "MENSAL" },
+        ]);
+        expect(diarias.map((m) => m.nome)).toEqual(["Diária"]);
+        expect(outras.map((m) => m.nome)).toEqual(["Semanal", "Única", "Mensal"]);
     });
 });
 

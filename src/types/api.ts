@@ -62,11 +62,14 @@ export type OfertaCatalogo = {
     dataFimCivil: string;
 };
 
+export type FrequenciaMissao = "UMA_VEZ" | "DIARIA" | "SEMANAL" | "MENSAL";
+
 export type MissaoCatalogo = {
     id: number;
     nome: string;
     descricao: string | null;
     pontoRecompensa: number;
+    frequencia: FrequenciaMissao;
     sistema: boolean;
 };
 

@@ -61,7 +61,7 @@ export default function LayoutAbas() {
             <Tabs.Screen
                 name="nfce"
                 options={{
-                    title: "Ler NFC-e",
+                    title: "Campanhas",
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons color={color} name="receipt-outline" size={size} />
                     ),

@@ -1,13 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { cores } from "@/styles/tema";
 import { MissaoDisponivel } from "@/types/api";
 
 type Props = {
     missao: MissaoDisponivel;
+    onRealizar: (missao: MissaoDisponivel) => void;
 };
 
-export function CartaoMissaoDisponivel({ missao }: Props) {
+export function CartaoMissaoDisponivel({ missao, onRealizar }: Props) {
     return (
         <View style={estilos.cartao}>
             <View style={estilos.texto}>
@@ -28,6 +29,15 @@ export function CartaoMissaoDisponivel({ missao }: Props) {
                     <Text style={estilos.textoPontos}>+{missao.pontoRecompensa} pts</Text>
                 </View>
             </View>
+            <Pressable
+                accessibilityLabel={`Realizar missão ${missao.nome}`}
+                accessibilityRole="button"
+                onPress={() => onRealizar(missao)}
+                style={({ pressed }) => [estilos.botao, pressed && estilos.pressionado]}
+            >
+                <Ionicons color="#FFFFFF" name="qr-code-outline" size={18} />
+                <Text style={estilos.textoBotao}>Realizar missão</Text>
+            </Pressable>
         </View>
     );
 }
@@ -62,4 +72,16 @@ const estilos = StyleSheet.create({
         paddingVertical: 4,
     },
     textoPontos: { color: cores.ouro, fontSize: 12, fontWeight: "800" },
+    botao: {
+        alignItems: "center",
+        backgroundColor: cores.primaria,
+        borderRadius: 999,
+        flexDirection: "row",
+        gap: 8,
+        justifyContent: "center",
+        marginTop: 2,
+        paddingVertical: 12,
+    },
+    pressionado: { opacity: 0.88 },
+    textoBotao: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
 });
