@@ -1,28 +1,49 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Href, router, useFocusEffect } from "expo-router";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
 import { useSessao } from "@/features/auth/ContextoSessao";
-import { normalizarErro } from "@/services/normalizarErro";
+import { CarrosselLojasDestaque } from "@/features/progresso/components/CarrosselLojasDestaque";
+import { PainelXp } from "@/features/progresso/components/PainelXp";
+import { ResumoAtividades } from "@/features/progresso/components/ResumoAtividades";
+import { listarLojasDestaque } from "@/features/progresso/servicoProgresso";
+import { useProgressoConsumidor } from "@/features/progresso/useProgressoConsumidor";
 import { cores } from "@/styles/tema";
+import { LojaDestaque } from "@/types/api";
+
+const ATALHOS: { rotulo: string; icone: keyof typeof Ionicons.glyphMap; destino: Href; cor: string; fundo: string }[] = [
+    { rotulo: "Missões", icone: "flag", destino: "/missoes", cor: cores.primaria, fundo: cores.primariaSuave },
+    { rotulo: "Campanha", icone: "receipt", destino: "/nfce", cor: cores.ouro, fundo: cores.ouroSuave },
+    { rotulo: "Recompensas", icone: "gift", destino: "/recompensas", cor: cores.coral, fundo: cores.perigoSuave },
+];
 
 export default function TelaInicio() {
     const { perfil, atualizarPerfil } = useSessao();
+    const { progresso, erro, recarregar } = useProgressoConsumidor();
+    const [lojas, setLojas] = useState<LojaDestaque[] | null>(null);
     const [atualizando, setAtualizando] = useState(false);
-    const [erro, setErro] = useState<string | null>(null);
     const primeiroNome = perfil?.usuario.nome.trim().split(/\s+/)[0] ?? "";
+
+    const carregarLojas = useCallback(async () => {
+        try {
+            setLojas(await listarLojasDestaque());
+        } catch {
+            setLojas([]);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            void carregarLojas();
+        }, [carregarLojas]),
+    );
 
     async function atualizar() {
         setAtualizando(true);
-        setErro(null);
-        try {
-            await atualizarPerfil();
-        } catch (causa) {
-            setErro(normalizarErro(causa));
-        } finally {
-            setAtualizando(false);
-        }
+        await Promise.allSettled([recarregar(), carregarLojas(), atualizarPerfil()]);
+        setAtualizando(false);
     }
 
     return (
@@ -34,42 +55,60 @@ export default function TelaInicio() {
                         colors={[cores.primaria]}
                         onRefresh={() => void atualizar()}
                         refreshing={atualizando}
+                        tintColor={cores.primaria}
                     />
                 }
                 style={estilos.scroll}
             >
-                <Text style={estilos.saudacao}>Olá, {primeiroNome} 👋</Text>
-                <Text style={estilos.introducao}>
-                    Seu progresso está sempre atualizado pelo Conecta Comércio.
-                </Text>
-                <MensagemErro mensagem={erro} />
-                <View style={estilos.linhaCards}>
-                    <View style={[estilos.cardDestaque, estilos.cardPontos]}>
-                        <View style={estilos.brilho} />
-                        <View style={estilos.linhaSparkles}>
-                            <Ionicons color="#FFFFFF" name="sparkles" size={18} />
-                            <Ionicons color="rgba(255,255,255,0.85)" name="sparkles" size={14} />
-                            <Ionicons color="rgba(255,255,255,0.7)" name="sparkles" size={12} />
-                        </View>
-                        <Text style={estilos.rotuloDestaque}>Seus pontos</Text>
-                        <Text style={estilos.numeroDestaque}>{perfil?.consumidor.pontos ?? 0} pts</Text>
-                    </View>
-                    <View style={[estilos.cardDestaque, estilos.cardNivel]}>
-                        <Ionicons color={cores.primaria} name="ribbon-outline" size={25} />
-                        <Text style={estilos.rotuloNivel}>Nível</Text>
-                        <Text style={estilos.numeroNivel}>{perfil?.consumidor.nivel ?? 1}</Text>
-                    </View>
+                <View>
+                    <Text style={estilos.saudacao}>Olá, {primeiroNome} 👋</Text>
+                    <Text style={estilos.introducao}>Bora subir de nível no comércio local?</Text>
                 </View>
-                <View style={estilos.cartaoInformativo}>
-                    <View style={estilos.iconeInformativo}>
-                        <Ionicons color={cores.primaria} name="storefront-outline" size={24} />
+
+                <MensagemErro mensagem={erro} />
+                {progresso ? (
+                    <>
+                        <PainelXp compacto progresso={progresso} />
+                        <ResumoAtividades progresso={progresso} somente={["pontos", "tickets"]} />
+                    </>
+                ) : erro ? null : (
+                    <View style={estilos.carregando}>
+                        <ActivityIndicator color={cores.primaria} />
                     </View>
-                    <View style={estilos.textoInformativo}>
-                        <Text style={estilos.tituloInformativo}>Acompanhe por aqui</Text>
-                        <Text style={estilos.descricaoInformativa}>
-                            Novas formas de aproveitar o comércio local chegarão em breve.
-                        </Text>
+                )}
+
+                <View style={estilos.cabecalhoSecao}>
+                    <View>
+                        <Text style={estilos.tituloSecao}>Lojas em destaque</Text>
+                        <Text style={estilos.subtituloSecao}>Mais ofertas valendo agora</Text>
                     </View>
+                    <Pressable accessibilityRole="link" hitSlop={8} onPress={() => router.push("/lojas")}>
+                        <Text style={estilos.verTodas}>Ver todas</Text>
+                    </Pressable>
+                </View>
+                {lojas ? (
+                    <CarrosselLojasDestaque lojas={lojas} />
+                ) : (
+                    <View style={estilos.carregando}>
+                        <ActivityIndicator color={cores.primaria} />
+                    </View>
+                )}
+
+                <Text style={estilos.tituloSecao}>Atalhos</Text>
+                <View style={estilos.atalhos}>
+                    {ATALHOS.map((atalho) => (
+                        <Pressable
+                            accessibilityRole="button"
+                            key={atalho.rotulo}
+                            onPress={() => router.push(atalho.destino)}
+                            style={({ pressed }) => [estilos.atalho, pressed && estilos.pressionado]}
+                        >
+                            <View style={[estilos.iconeAtalho, { backgroundColor: atalho.fundo }]}>
+                                <Ionicons color={atalho.cor} name={atalho.icone} size={22} />
+                            </View>
+                            <Text style={estilos.rotuloAtalho}>{atalho.rotulo}</Text>
+                        </Pressable>
+                    ))}
                 </View>
             </ScrollView>
         </FundoPastel>
@@ -78,53 +117,26 @@ export default function TelaInicio() {
 
 const estilos = StyleSheet.create({
     scroll: { backgroundColor: "transparent", flex: 1 },
-    conteudo: { flexGrow: 1, gap: 18, padding: 20 },
-    saudacao: { color: cores.texto, fontSize: 28, fontWeight: "800", marginTop: 4 },
-    introducao: { color: cores.textoSecundario, fontSize: 15, lineHeight: 22, marginTop: -10 },
-    linhaCards: { flexDirection: "row", gap: 12 },
-    cardDestaque: {
-        borderRadius: 20,
-        flex: 1,
-        minHeight: 156,
-        overflow: "hidden",
-        padding: 18,
-    },
-    cardPontos: { backgroundColor: cores.primaria },
-    brilho: {
-        backgroundColor: cores.primariaEscura,
-        borderRadius: 80,
-        bottom: -36,
-        height: 100,
-        opacity: 0.35,
-        position: "absolute",
-        right: -28,
-        width: 120,
-    },
-    linhaSparkles: { flexDirection: "row", gap: 6 },
-    cardNivel: { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 },
-    rotuloDestaque: { color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600", marginTop: 18 },
-    numeroDestaque: { color: "#FFFFFF", fontSize: 25, fontWeight: "800", marginTop: 5 },
-    rotuloNivel: { color: cores.textoSecundario, fontSize: 14, fontWeight: "600", marginTop: 18 },
-    numeroNivel: { color: cores.texto, fontSize: 25, fontWeight: "800", marginTop: 5 },
-    cartaoInformativo: {
-        alignItems: "flex-start",
+    conteudo: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32 },
+    saudacao: { color: cores.texto, fontSize: 28, fontWeight: "900" },
+    introducao: { color: cores.textoSecundario, fontSize: 15, lineHeight: 22, marginTop: 2 },
+    carregando: { alignItems: "center", paddingVertical: 24 },
+    cabecalhoSecao: { alignItems: "flex-end", flexDirection: "row", justifyContent: "space-between", marginTop: 4 },
+    tituloSecao: { color: cores.texto, fontSize: 18, fontWeight: "900" },
+    subtituloSecao: { color: cores.textoSecundario, fontSize: 13, marginTop: 2 },
+    verTodas: { color: cores.primaria, fontSize: 14, fontWeight: "800" },
+    atalhos: { flexDirection: "row", gap: 10 },
+    atalho: {
+        alignItems: "center",
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
-        borderRadius: 20,
+        borderRadius: 18,
         borderWidth: 1,
-        flexDirection: "row",
-        gap: 14,
-        padding: 18,
+        flex: 1,
+        gap: 8,
+        paddingVertical: 14,
     },
-    iconeInformativo: {
-        alignItems: "center",
-        backgroundColor: cores.primariaSuave,
-        borderRadius: 14,
-        height: 48,
-        justifyContent: "center",
-        width: 48,
-    },
-    textoInformativo: { flex: 1 },
-    tituloInformativo: { color: cores.texto, fontSize: 16, fontWeight: "700" },
-    descricaoInformativa: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, marginTop: 5 },
+    iconeAtalho: { alignItems: "center", borderRadius: 14, height: 44, justifyContent: "center", width: 44 },
+    rotuloAtalho: { color: cores.texto, fontSize: 12, fontWeight: "800" },
+    pressionado: { opacity: 0.85 },
 });

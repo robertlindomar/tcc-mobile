@@ -1,12 +1,21 @@
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BotaoPrimario } from "@/components/BotaoPrimario";
 import { FundoPastel } from "@/components/FundoPastel";
+import { MensagemErro } from "@/components/MensagemErro";
 import { useSessao } from "@/features/auth/ContextoSessao";
+import { ListaConquistas } from "@/features/progresso/components/ListaConquistas";
+import { PainelXp } from "@/features/progresso/components/PainelXp";
+import { ResumoAtividades } from "@/features/progresso/components/ResumoAtividades";
+import { tituloDoNivel } from "@/features/progresso/regrasProgresso";
+import { useProgressoConsumidor } from "@/features/progresso/useProgressoConsumidor";
 import { cores } from "@/styles/tema";
 
 export default function TelaPerfil() {
     const { perfil, sair } = useSessao();
+    const { progresso, erro, recarregar } = useProgressoConsumidor();
+    const [atualizando, setAtualizando] = useState(false);
     const nome = perfil?.usuario.nome ?? "";
     const iniciais = nome
         .split(/\s+/)
@@ -15,6 +24,12 @@ export default function TelaPerfil() {
         .map((parte) => parte[0])
         .join("")
         .toUpperCase();
+
+    async function atualizar() {
+        setAtualizando(true);
+        await recarregar();
+        setAtualizando(false);
+    }
 
     function confirmarSaida() {
         if (Platform.OS === "web") {
@@ -35,28 +50,63 @@ export default function TelaPerfil() {
 
     return (
         <FundoPastel>
-            <ScrollView contentContainerStyle={estilos.conteudo} style={estilos.scroll}>
+            <ScrollView
+                contentContainerStyle={estilos.conteudo}
+                refreshControl={
+                    <RefreshControl
+                        colors={[cores.primaria]}
+                        onRefresh={() => void atualizar()}
+                        refreshing={atualizando}
+                        tintColor={cores.primaria}
+                    />
+                }
+                style={estilos.scroll}
+            >
                 <View style={estilos.resumo}>
-                    <View style={estilos.avatar}>
-                        <Text style={estilos.iniciais}>{iniciais}</Text>
+                    <View style={estilos.anelAvatar}>
+                        <View style={estilos.avatar}>
+                            <Text style={estilos.iniciais}>{iniciais}</Text>
+                        </View>
+                        {progresso ? (
+                            <View style={estilos.seloNivel}>
+                                <Text style={estilos.textoSeloNivel}>{progresso.nivel}</Text>
+                            </View>
+                        ) : null}
                     </View>
                     <Text style={estilos.nome}>{nome}</Text>
-                    <Text style={estilos.email}>{perfil?.usuario.email}</Text>
+                    {progresso ? (
+                        <View style={estilos.chipTitulo}>
+                            <Ionicons color={cores.ouro} name="shield-checkmark" size={14} />
+                            <Text style={estilos.textoChip}>{tituloDoNivel(progresso.nivel)}</Text>
+                        </View>
+                    ) : null}
                 </View>
+
+                <MensagemErro mensagem={erro} />
+                {progresso ? (
+                    <>
+                        <PainelXp progresso={progresso} />
+                        <Text style={estilos.tituloSecao}>Resumo das atividades</Text>
+                        <ResumoAtividades progresso={progresso} />
+                        <ListaConquistas progresso={progresso} />
+                    </>
+                ) : erro ? null : (
+                    <View style={estilos.carregando}>
+                        <ActivityIndicator color={cores.primaria} />
+                    </View>
+                )}
+
+                <Text style={estilos.tituloSecao}>Conta</Text>
                 <View style={estilos.cartao}>
-                    <DadoPerfil icone="mail-outline" rotulo="E-mail" valor={perfil?.usuario.email ?? ""} />
-                    <View style={estilos.divisor} />
-                    <DadoPerfil
-                        icone="sparkles-outline"
-                        rotulo="Pontos"
-                        valor={`${perfil?.consumidor.pontos ?? 0} pts`}
-                    />
-                    <View style={estilos.divisor} />
-                    <DadoPerfil
-                        icone="ribbon-outline"
-                        rotulo="Nível"
-                        valor={`${perfil?.consumidor.nivel ?? 1}`}
-                    />
+                    <View style={estilos.linhaDado}>
+                        <View style={estilos.iconeCaixa}>
+                            <Ionicons color={cores.primaria} name="mail-outline" size={20} />
+                        </View>
+                        <View style={estilos.textoDado}>
+                            <Text style={estilos.rotulo}>E-mail</Text>
+                            <Text style={estilos.valor}>{perfil?.usuario.email ?? ""}</Text>
+                        </View>
+                    </View>
                 </View>
                 <BotaoPrimario
                     aoPressionar={confirmarSaida}
@@ -69,51 +119,60 @@ export default function TelaPerfil() {
     );
 }
 
-function DadoPerfil({
-    icone,
-    rotulo,
-    valor,
-}: {
-    icone: keyof typeof Ionicons.glyphMap;
-    rotulo: string;
-    valor: string;
-}) {
-    return (
-        <View style={estilos.linhaDado}>
-            <View style={estilos.iconeCaixa}>
-                <Ionicons color={cores.primaria} name={icone} size={20} />
-            </View>
-            <View style={estilos.textoDado}>
-                <Text style={estilos.rotulo}>{rotulo}</Text>
-                <Text style={estilos.valor}>{valor}</Text>
-            </View>
-        </View>
-    );
-}
-
 const estilos = StyleSheet.create({
     scroll: { backgroundColor: "transparent", flex: 1 },
-    conteudo: { flexGrow: 1, gap: 22, padding: 20 },
-    resumo: { alignItems: "center", paddingVertical: 20 },
+    conteudo: { flexGrow: 1, gap: 16, padding: 20, paddingBottom: 32 },
+    resumo: { alignItems: "center", gap: 8, paddingTop: 8 },
+    anelAvatar: {
+        borderColor: cores.ouro,
+        borderRadius: 999,
+        borderWidth: 3,
+        padding: 4,
+    },
     avatar: {
         alignItems: "center",
         backgroundColor: cores.primaria,
-        borderRadius: 44,
+        borderRadius: 999,
         height: 88,
         justifyContent: "center",
         width: 88,
     },
     iniciais: { color: "#FFFFFF", fontSize: 29, fontWeight: "800" },
-    nome: { color: cores.texto, fontSize: 23, fontWeight: "800", marginTop: 14 },
-    email: { color: cores.textoSecundario, fontSize: 15, marginTop: 5 },
+    seloNivel: {
+        alignItems: "center",
+        backgroundColor: cores.ouro,
+        borderColor: cores.superficie,
+        borderRadius: 999,
+        borderWidth: 3,
+        bottom: -6,
+        height: 34,
+        justifyContent: "center",
+        position: "absolute",
+        right: -6,
+        width: 34,
+    },
+    textoSeloNivel: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
+    nome: { color: cores.texto, fontSize: 23, fontWeight: "900", marginTop: 6 },
+    chipTitulo: {
+        alignItems: "center",
+        backgroundColor: cores.ouroSuave,
+        borderRadius: 999,
+        flexDirection: "row",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+    },
+    textoChip: { color: cores.ouro, fontSize: 13, fontWeight: "800" },
+    carregando: { alignItems: "center", paddingVertical: 24 },
+    tituloSecao: { color: cores.texto, fontSize: 17, fontWeight: "900", marginTop: 4 },
     cartao: {
         backgroundColor: cores.superficie,
         borderColor: cores.borda,
         borderRadius: 20,
         borderWidth: 1,
-        padding: 18,
+        padding: 14,
     },
-    linhaDado: { alignItems: "center", flexDirection: "row", gap: 13, paddingVertical: 7 },
+    linhaDado: { alignItems: "center", flexDirection: "row", gap: 13 },
     iconeCaixa: {
         alignItems: "center",
         backgroundColor: cores.primariaSuave,
@@ -125,6 +184,5 @@ const estilos = StyleSheet.create({
     textoDado: { flex: 1 },
     rotulo: { color: cores.textoSecundario, fontSize: 13 },
     valor: { color: cores.texto, fontSize: 16, fontWeight: "600", marginTop: 3 },
-    divisor: { backgroundColor: cores.borda, height: 1, marginVertical: 12 },
     botaoSair: { borderRadius: 999 },
 });

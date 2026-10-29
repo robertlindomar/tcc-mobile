@@ -31,6 +31,28 @@ export type LojaCatalogo = {
     distanciaKm?: number | null;
 };
 
+export type LojaDestaque = {
+    id: number;
+    nomeFantasia: string;
+    urlLogo: string | null;
+    ofertasVigentes: number;
+    maiorDesconto: number | null;
+};
+
+export type ProgressoConsumidor = {
+    pontos: number;
+    pontosGastos: number;
+    xp: number;
+    nivel: number;
+    xpInicioNivel: number;
+    xpProximoNivel: number;
+    missoesConcluidas: number;
+    lojasVisitadas: number;
+    notasLidas: number;
+    resgates: number;
+    ticketsCampanhasAtivas: number;
+};
+
 export type LojaCatalogoDetalhe = {
     id: number;
     nomeFantasia: string;
