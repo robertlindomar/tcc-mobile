@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, Platform, RefreshControl, ScrollView, StyleSh
 import { BotaoPrimario } from "@/components/BotaoPrimario";
 import { FundoPastel } from "@/components/FundoPastel";
 import { MensagemErro } from "@/components/MensagemErro";
+import { useVerificarAtualizacao } from "@/features/atualizacao/useVerificarAtualizacao";
 import { useSessao } from "@/features/auth/ContextoSessao";
 import { ListaConquistas } from "@/features/progresso/components/ListaConquistas";
 import { PainelXp } from "@/features/progresso/components/PainelXp";
@@ -13,6 +14,7 @@ import { useProgressoConsumidor } from "@/features/progresso/useProgressoConsumi
 import { cores } from "@/styles/tema";
 
 export default function TelaPerfil() {
+    const atualizacao = useVerificarAtualizacao();
     const { perfil, sair } = useSessao();
     const { progresso, erro, recarregar } = useProgressoConsumidor();
     const [atualizando, setAtualizando] = useState(false);
@@ -108,6 +110,23 @@ export default function TelaPerfil() {
                         </View>
                     </View>
                 </View>
+                <Text style={estilos.tituloSecao}>Atualização do app</Text>
+                <View style={[estilos.cartao, { gap: 12 }]}>
+                    <Text style={estilos.valor}>{atualizacao.buildSha ? `Build ${atualizacao.buildSha}` : "Build de desenvolvimento"}</Text>
+                    <Text accessibilityLiveRegion="polite" style={estilos.rotulo}>{atualizacao.mensagem}</Text>
+                    {atualizacao.estado.tipo === "baixando" ? (
+                        <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(atualizacao.estado.progresso * 100) }} style={estilos.barraProgresso}>
+                            <View style={[estilos.progressoDownload, { width: `${atualizacao.estado.progresso * 100}%` }]} />
+                        </View>
+                    ) : null}
+                    <BotaoPrimario
+                        titulo="Verificar atualização"
+                        aoPressionar={() => void atualizacao.verificar()}
+                        carregando={atualizacao.ocupado}
+                        desabilitado={!atualizacao.disponivel}
+                    />
+                    {atualizacao.disponivel ? <Text style={estilos.rotulo}>Na primeira atualização, permita instalar apps desconhecidos para o Conecta Comércio. Depois, toque em Instalar. Se cancelar, você pode verificar novamente.</Text> : null}
+                </View>
                 <BotaoPrimario
                     aoPressionar={confirmarSaida}
                     estilo={estilos.botaoSair}
@@ -184,5 +203,7 @@ const estilos = StyleSheet.create({
     textoDado: { flex: 1 },
     rotulo: { color: cores.textoSecundario, fontSize: 13 },
     valor: { color: cores.texto, fontSize: 16, fontWeight: "600", marginTop: 3 },
+    barraProgresso: { height: 8, borderRadius: 4, backgroundColor: cores.borda, overflow: "hidden" },
+    progressoDownload: { height: 8, backgroundColor: cores.primaria },
     botaoSair: { borderRadius: 999 },
 });
