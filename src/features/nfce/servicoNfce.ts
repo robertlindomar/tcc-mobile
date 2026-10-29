@@ -1,8 +1,12 @@
 import { requisitar } from "@/services/clienteHttp";
-import { CampanhaVigente, RespostaProcessamentoNfce } from "@/types/api";
+import { CampanhaVigente, ExtratoCampanha, RespostaProcessamentoNfce } from "@/types/api";
 
 export async function listarCampanhasVigentes(): Promise<CampanhaVigente[]> {
     return requisitar<CampanhaVigente[]>("/nfce/campanhas-vigentes");
+}
+
+export async function buscarMeuExtrato(campanhaId: number): Promise<ExtratoCampanha> {
+    return requisitar<ExtratoCampanha>(`/nfce/campanhas/${campanhaId}/meu-extrato`);
 }
 
 export async function processarNfce(dados: {

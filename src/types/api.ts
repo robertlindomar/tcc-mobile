@@ -144,6 +144,8 @@ export type RespostaResgatarRecompensa = {
 export type RespostaProcessamentoNfce = {
     id: number;
     campanhaId: number;
+    /** Edição da campanha que recebeu os tickets (numeração recomeça a cada edição). */
+    edicao?: number;
     chaveAcesso: string;
     valorNota: number;
     ticketsGerados: number;
@@ -164,4 +166,24 @@ export type CampanhaVigente = {
     dataInicioCivil: string;
     dataFimCivil: string;
     valorPorTicket: number;
+};
+
+export type NotaLidaCampanha = {
+    id: number;
+    valorNota: number;
+    ticketsGerados: number;
+    numerosTickets: { primeiro: number; ultimo: number } | null;
+    dataEmissao: string;
+    dataLeitura: string;
+    loja: { nome: string; cnpj: string };
+};
+
+export type ExtratoCampanha = {
+    campanhaId: number;
+    edicao: number;
+    valorPorTicket: number;
+    totalTickets: number;
+    valorResidual: number;
+    faltaParaProximoTicket: number;
+    notas: NotaLidaCampanha[];
 };

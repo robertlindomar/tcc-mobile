@@ -45,6 +45,8 @@ function mensagemHttp(
 
     const mensagensNfcePorCodigo: Record<string, string> = {
         NFCE_JA_UTILIZADA: "Esta nota fiscal já foi utilizada.",
+        CAMPANHA_INATIVA: "Esta campanha foi encerrada pela associação. Atualize a tela.",
+        CAMPANHA_NAO_VIGENTE: "Esta campanha não está mais vigente. Atualize a tela.",
         NFCE_FORA_PERIODO: "A data da compra está fora do período da campanha.",
         NFCE_LOJISTA_NAO_PARTICIPANTE: "Esta loja não participa desta campanha.",
         NFCE_LOJISTA_NAO_APROVADO: "Esta loja ainda não está aprovada para a campanha.",

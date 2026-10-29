@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useFocusEffect, useIsFocused } from "expo-router";
 import {
     ActivityIndicator,
     Alert,
+    AppState,
     Platform,
     Pressable,
+    RefreshControl,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -13,13 +17,15 @@ import {
 } from "react-native";
 import { MensagemErro } from "@/components/MensagemErro";
 import { FundoPastel } from "@/components/FundoPastel";
-import { listarCampanhasVigentes, processarNfce } from "@/features/nfce/servicoNfce";
+import { HistoricoNotasLidas } from "@/features/nfce/components/HistoricoNotasLidas";
+import { ResumoTicketsCampanha } from "@/features/nfce/components/ResumoTicketsCampanha";
+import { buscarMeuExtrato, listarCampanhasVigentes, processarNfce } from "@/features/nfce/servicoNfce";
 import { parsearQrNfce } from "@/features/nfce/parsearQrNfce";
 import { normalizarErro } from "@/services/normalizarErro";
 import { cores } from "@/styles/tema";
 import { formatarDataCivil } from "@/utils/formatarDataCivil";
 import { formatarMoeda } from "@/utils/formatarMoeda";
-import { CampanhaVigente, RespostaProcessamentoNfce } from "@/types/api";
+import { CampanhaVigente, ExtratoCampanha, RespostaProcessamentoNfce } from "@/types/api";
 
 const INTERVALO_DEBOUNCE_MS = 2000;
 
@@ -114,34 +120,94 @@ export default function TelaAbaNfce() {
 
     return (
         <FundoPastel>
-            <View style={estilos.container}>
-                <CartaoCampanhaVigente campanha={campanha} />
-                {Platform.OS === "web" ? (
-                    <FallbackWeb campanhaId={campanha.id} />
-                ) : (
-                    <EscanearNativo campanhaId={campanha.id} />
-                )}
-            </View>
+            <ConteudoCampanha campanha={campanha} />
         </FundoPastel>
+    );
+}
+
+function ConteudoCampanha({ campanha }: { campanha: CampanhaVigente }) {
+    const [extrato, setExtrato] = useState<ExtratoCampanha | null>(null);
+    const [carregandoExtrato, setCarregandoExtrato] = useState(true);
+    const [atualizando, setAtualizando] = useState(false);
+
+    const carregarExtrato = useCallback(async () => {
+        setCarregandoExtrato(true);
+        try {
+            setExtrato(await buscarMeuExtrato(campanha.id));
+        } catch {
+            setExtrato(null);
+        } finally {
+            setCarregandoExtrato(false);
+        }
+    }, [campanha.id]);
+
+    const leitura = useLeituraNfce(campanha.id, carregarExtrato);
+    const { fecharCamera } = leitura;
+
+    useFocusEffect(
+        useCallback(() => {
+            void carregarExtrato();
+            return () => fecharCamera();
+        }, [carregarExtrato, fecharCamera]),
+    );
+
+    useEffect(() => {
+        const assinatura = AppState.addEventListener("change", (estado) => {
+            if (estado !== "active") {
+                fecharCamera();
+            }
+        });
+        return () => assinatura.remove();
+    }, [fecharCamera]);
+
+    async function atualizar() {
+        setAtualizando(true);
+        await carregarExtrato();
+        setAtualizando(false);
+    }
+
+    if (Platform.OS !== "web" && leitura.cameraAberta) {
+        return <CameraNfce leitura={leitura} />;
+    }
+
+    return (
+        <ScrollView
+            contentContainerStyle={estilos.conteudoRolavel}
+            refreshControl={
+                <RefreshControl
+                    colors={[cores.primaria]}
+                    onRefresh={() => void atualizar()}
+                    refreshing={atualizando}
+                    tintColor={cores.primaria}
+                />
+            }
+        >
+            <CartaoCampanhaVigente campanha={campanha} />
+            <ResumoTicketsCampanha carregando={carregandoExtrato} extrato={extrato} />
+            {Platform.OS === "web" ? (
+                <FallbackWeb campanhaId={campanha.id} onProcessado={carregarExtrato} />
+            ) : (
+                <PainelLeitura leitura={leitura} />
+            )}
+            {extrato ? <HistoricoNotasLidas notas={extrato.notas} /> : null}
+        </ScrollView>
     );
 }
 
 function CartaoCampanhaVigente({ campanha }: { campanha: CampanhaVigente }) {
     return (
-        <View style={estilos.barraCampanha}>
+        <View style={estilos.cartaoCampanha}>
             <Text style={estilos.rotuloCampanha}>Campanha vigente</Text>
-            <View style={estilos.cartaoCampanha}>
-                <Text style={estilos.tituloCampanha}>{campanha.nome}</Text>
-                <Text style={estilos.metaCampanha}>
-                    {formatarDataCivil(campanha.dataInicioCivil)} – {formatarDataCivil(campanha.dataFimCivil)} ·{" "}
-                    {formatarMoeda(campanha.valorPorTicket)}/ticket
-                </Text>
-            </View>
+            <Text style={estilos.tituloCampanha}>{campanha.nome}</Text>
+            <Text style={estilos.metaCampanha}>
+                {formatarDataCivil(campanha.dataInicioCivil)} – {formatarDataCivil(campanha.dataFimCivil)} ·{" "}
+                {formatarMoeda(campanha.valorPorTicket)}/ticket
+            </Text>
         </View>
     );
 }
 
-function FallbackWeb({ campanhaId }: { campanhaId: number }) {
+function FallbackWeb({ campanhaId, onProcessado }: { campanhaId: number; onProcessado: () => void }) {
     const [entrada, setEntrada] = useState("");
     const [processando, setProcessando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
@@ -159,6 +225,7 @@ function FallbackWeb({ campanhaId }: { campanhaId: number }) {
             const resposta = await processarNfce({ payloadQr: payload, campanhaId });
             globalThis.alert(mensagemSucesso(resposta));
             setEntrada("");
+            onProcessado();
         } catch (causa) {
             setErro(normalizarErro(causa));
         } finally {
@@ -167,7 +234,7 @@ function FallbackWeb({ campanhaId }: { campanhaId: number }) {
     }
 
     return (
-        <View style={estilos.conteudoWeb}>
+        <View style={estilos.painel}>
             <View style={estilos.avisoWeb}>
                 <Ionicons color={cores.primaria} name="information-circle-outline" size={22} />
                 <Text style={estilos.textoAvisoWeb}>
@@ -208,19 +275,26 @@ function FallbackWeb({ campanhaId }: { campanhaId: number }) {
     );
 }
 
-function EscanearNativo({ campanhaId }: { campanhaId: number }) {
+type LeituraNfce = ReturnType<typeof useLeituraNfce>;
+
+/** Estado do scanner nativo: abre a câmera sob demanda e a desliga ao ler, sair da aba ou fechar. */
+function useLeituraNfce(campanhaId: number, aoProcessar: () => void) {
     const [permissao, solicitarPermissao] = useCameraPermissions();
     const [processando, setProcessando] = useState(false);
-    const [scannerAtivo, setScannerAtivo] = useState(false);
+    const [cameraAberta, setCameraAberta] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
     const [sucesso, setSucesso] = useState<string | null>(null);
     const ultimaLeituraRef = useRef(0);
     const processandoRef = useRef(false);
     const campanhaIdRef = useRef(campanhaId);
+    const aoProcessarRef = useRef(aoProcessar);
 
     useEffect(() => {
         campanhaIdRef.current = campanhaId;
-    }, [campanhaId]);
+        aoProcessarRef.current = aoProcessar;
+    }, [campanhaId, aoProcessar]);
+
+    const fecharCamera = useCallback(() => setCameraAberta(false), []);
 
     const processarLeitura = useCallback(async (dados: string) => {
         const agora = Date.now();
@@ -232,14 +306,14 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
         try {
             payload = parsearQrNfce(dados).payloadQr;
         } catch (causa) {
-            setScannerAtivo(false);
+            setCameraAberta(false);
             setErro(normalizarErro(causa));
             return;
         }
 
         ultimaLeituraRef.current = agora;
         processandoRef.current = true;
-        setScannerAtivo(false);
+        setCameraAberta(false);
         setProcessando(true);
         setErro(null);
         setSucesso(null);
@@ -251,6 +325,7 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
             });
             const mensagem = mensagemSucesso(resposta);
             setSucesso(mensagem);
+            aoProcessarRef.current();
             Alert.alert("Tickets creditados!", mensagem);
         } catch (causa) {
             setErro(normalizarErro(causa));
@@ -260,82 +335,93 @@ function EscanearNativo({ campanhaId }: { campanhaId: number }) {
         }
     }, []);
 
-    async function abrirScanner() {
+    async function abrirCamera() {
         setErro(null);
         setSucesso(null);
-        const permissaoAtual = permissao?.granted
-            ? permissao
-            : await solicitarPermissao();
+        const permissaoAtual = permissao?.granted ? permissao : await solicitarPermissao();
         if (!permissaoAtual.granted) {
             setErro("Permita o acesso à câmera para escanear a NFC-e.");
             return;
         }
         ultimaLeituraRef.current = 0;
-        setScannerAtivo(true);
+        setCameraAberta(true);
     }
 
-    if (!scannerAtivo) {
-        return (
-            <View style={estilos.conteudoScannerFechado}>
+    return { cameraAberta, processando, erro, sucesso, abrirCamera, fecharCamera, processarLeitura };
+}
+
+function PainelLeitura({ leitura }: { leitura: LeituraNfce }) {
+    const { processando, erro, sucesso } = leitura;
+    return (
+        <View style={estilos.painel}>
+            <View style={estilos.cabecalhoPainel}>
                 {processando ? (
-                    <>
-                        <ActivityIndicator color={cores.primaria} size="large" />
-                        <Text style={estilos.tituloPermissao}>Consultando NFC-e…</Text>
-                        <Text style={estilos.textoPermissao}>
-                            Aguarde a resposta da SEFAZ. A câmera já foi desligada.
-                        </Text>
-                    </>
-                ) : sucesso ? (
-                    <>
-                        <Ionicons color="#15803D" name="checkmark-circle" size={56} />
-                        <Text style={estilos.tituloSucesso}>NFC-e processada com sucesso</Text>
-                        <Text style={estilos.textoResultado}>{sucesso}</Text>
-                    </>
+                    <ActivityIndicator color={cores.primaria} />
                 ) : (
-                    <>
-                        <Ionicons color={cores.primaria} name="qr-code-outline" size={52} />
-                        <Text style={estilos.tituloPermissao}>
-                            {erro ? "Não foi possível processar a NFC-e" : "Scanner NFC-e"}
-                        </Text>
-                        <Text style={estilos.textoPermissao}>
-                            {erro
-                                ? "Confira a mensagem abaixo e tente novamente."
-                                : "A câmera ficará aberta somente até identificar um QR code."}
-                        </Text>
-                    </>
+                    <Ionicons
+                        color={sucesso ? "#15803D" : cores.primaria}
+                        name={sucesso ? "checkmark-circle" : "qr-code-outline"}
+                        size={28}
+                    />
                 )}
-                <MensagemErro mensagem={erro} />
-                <Pressable
-                    accessibilityRole="button"
-                    disabled={processando}
-                    onPress={() => void abrirScanner()}
-                    style={({ pressed }) => [estilos.botaoAcao, pressed && estilos.pressionado]}
-                >
-                    <Text style={estilos.textoBotaoAcao}>
-                        {erro ? "Tentar novamente" : sucesso ? "Escanear outra NFC-e" : "Escanear NFC-e"}
-                    </Text>
-                </Pressable>
+                <Text style={estilos.tituloPainel}>
+                    {processando
+                        ? "Consultando NFC-e…"
+                        : sucesso
+                          ? "NFC-e processada com sucesso"
+                          : erro
+                            ? "Não foi possível processar a NFC-e"
+                            : "Ler nota fiscal"}
+                </Text>
             </View>
-        );
-    }
+            <Text style={estilos.textoPainel}>
+                {processando
+                    ? "Aguarde a resposta da SEFAZ. A câmera já foi desligada."
+                    : sucesso ?? "A câmera fica aberta só até identificar o QR code da NFC-e."}
+            </Text>
+            <MensagemErro mensagem={erro} />
+            <Pressable
+                accessibilityRole="button"
+                disabled={processando}
+                onPress={() => void leitura.abrirCamera()}
+                style={({ pressed }) => [
+                    estilos.botaoAcao,
+                    processando && estilos.botaoDesabilitado,
+                    pressed && !processando && estilos.pressionado,
+                ]}
+            >
+                <Text style={estilos.textoBotaoAcao}>
+                    {erro ? "Tentar novamente" : sucesso ? "Escanear outra NFC-e" : "Escanear NFC-e"}
+                </Text>
+            </Pressable>
+        </View>
+    );
+}
 
+function CameraNfce({ leitura }: { leitura: LeituraNfce }) {
+    const emFoco = useIsFocused();
     return (
         <View style={estilos.containerCamera}>
-            <CameraView
-                barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                onBarcodeScanned={scannerAtivo ? ({ data }) => void processarLeitura(data) : undefined}
-                style={StyleSheet.absoluteFill}
-            />
+            {emFoco ? (
+                <CameraView
+                    barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                    onBarcodeScanned={({ data }) => void leitura.processarLeitura(data)}
+                    style={StyleSheet.absoluteFill}
+                />
+            ) : null}
             <View style={estilos.overlay}>
                 <View style={estilos.moldura} />
                 <Text style={estilos.instrucao}>Aponte para o QR da nota fiscal</Text>
-                {processando ? (
-                    <View style={estilos.processando}>
-                        <ActivityIndicator color="#FFFFFF" />
-                        <Text style={estilos.textoProcessando}>Processando NFC-e…</Text>
-                    </View>
-                ) : null}
             </View>
+            <Pressable
+                accessibilityLabel="Fechar câmera"
+                accessibilityRole="button"
+                onPress={leitura.fecharCamera}
+                style={({ pressed }) => [estilos.botaoFecharCamera, pressed && estilos.pressionado]}
+            >
+                <Ionicons color="#FFFFFF" name="close" size={22} />
+                <Text style={estilos.textoFecharCamera}>Fechar câmera</Text>
+            </Pressable>
         </View>
     );
 }
@@ -352,12 +438,8 @@ const estilos = StyleSheet.create({
     },
     tituloEstado: { color: cores.texto, fontSize: 18, fontWeight: "800", textAlign: "center" },
     textoEstado: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
-    barraCampanha: {
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    rotuloCampanha: { color: cores.texto, fontSize: 13, fontWeight: "700" },
+    conteudoRolavel: { gap: 14, padding: 16, paddingBottom: 32 },
+    rotuloCampanha: { color: "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: "700" },
     cartaoCampanha: {
         backgroundColor: cores.primaria,
         borderRadius: 16,
@@ -366,7 +448,17 @@ const estilos = StyleSheet.create({
     },
     tituloCampanha: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
     metaCampanha: { color: "rgba(255,255,255,0.9)", fontSize: 12, marginTop: 2 },
-    conteudoWeb: { flex: 1, gap: 12, padding: 20 },
+    painel: {
+        backgroundColor: cores.superficie,
+        borderColor: cores.borda,
+        borderRadius: 18,
+        borderWidth: 1,
+        gap: 8,
+        padding: 16,
+    },
+    cabecalhoPainel: { alignItems: "center", flexDirection: "row", gap: 10 },
+    tituloPainel: { color: cores.texto, flex: 1, fontSize: 16, fontWeight: "800" },
+    textoPainel: { color: cores.textoSecundario, fontSize: 13, lineHeight: 19 },
     avisoWeb: {
         alignItems: "flex-start",
         backgroundColor: cores.primariaSuave,
@@ -399,24 +491,6 @@ const estilos = StyleSheet.create({
     botaoDesabilitado: { opacity: 0.7 },
     pressionado: { opacity: 0.88 },
     textoBotaoAcao: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-    conteudoPermissao: {
-        alignItems: "center",
-        flex: 1,
-        gap: 12,
-        justifyContent: "center",
-        padding: 24,
-    },
-    conteudoScannerFechado: {
-        alignItems: "center",
-        flex: 1,
-        gap: 12,
-        justifyContent: "center",
-        padding: 24,
-    },
-    tituloPermissao: { color: cores.texto, fontSize: 20, fontWeight: "800" },
-    tituloSucesso: { color: cores.primariaEscura, fontSize: 20, fontWeight: "800", textAlign: "center" },
-    textoPermissao: { color: cores.textoSecundario, fontSize: 14, lineHeight: 20, textAlign: "center" },
-    textoResultado: { color: cores.texto, fontSize: 15, lineHeight: 22, textAlign: "center" },
     containerCamera: { backgroundColor: "#000000", flex: 1 },
     overlay: {
         ...StyleSheet.absoluteFill,
@@ -441,6 +515,17 @@ const estilos = StyleSheet.create({
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 4,
     },
-    processando: { alignItems: "center", flexDirection: "row", gap: 8, marginTop: 16 },
-    textoProcessando: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
+    botaoFecharCamera: {
+        alignItems: "center",
+        alignSelf: "center",
+        backgroundColor: "rgba(0,0,0,0.6)",
+        borderRadius: 999,
+        bottom: 32,
+        flexDirection: "row",
+        gap: 6,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        position: "absolute",
+    },
+    textoFecharCamera: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
 });

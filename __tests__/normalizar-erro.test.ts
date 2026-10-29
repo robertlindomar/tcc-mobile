@@ -22,6 +22,16 @@ describe("normalizarErro", () => {
         );
     });
 
+    it("explica campanha inativada ou fora de vigência durante a leitura da NFC-e", () => {
+        const erro = (codigo: string) => new ErroApi("msg interna", "HTTP", 409, null, null, null, codigo);
+        expect(normalizarErro(erro("CAMPANHA_INATIVA"))).toBe(
+            "Esta campanha foi encerrada pela associação. Atualize a tela.",
+        );
+        expect(normalizarErro(erro("CAMPANHA_NAO_VIGENTE"))).toBe(
+            "Esta campanha não está mais vigente. Atualize a tela.",
+        );
+    });
+
     it("mapeia missão recorrente com disponivelEm", () => {
         const mensagem = normalizarErro(
             new ErroApi(
