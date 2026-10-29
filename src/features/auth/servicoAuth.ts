@@ -38,6 +38,18 @@ export async function cadastrarConsumidorApi(
     });
 }
 
+export type RespostaEsqueciSenha = {
+    mensagem: string;
+};
+
+export async function esqueciSenhaApi(email: string): Promise<RespostaEsqueciSenha> {
+    return requisitar<RespostaEsqueciSenha>("/auth/esqueci-senha", {
+        metodo: "POST",
+        corpo: { email },
+        token: "",
+    });
+}
+
 export function usuarioEhConsumidor(role: PapelUsuario): boolean {
     return role === "CONSUMIDOR";
 }

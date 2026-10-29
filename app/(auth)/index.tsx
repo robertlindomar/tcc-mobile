@@ -95,6 +95,9 @@ export default function TelaLogin() {
                                 </Pressable>
                             }
                         />
+                        <Link href="/(auth)/esqueci-senha" style={[estilos.link, estilos.esqueciSenha]}>
+                            Esqueci minha senha
+                        </Link>
                         <MensagemErro mensagem={erro} />
                         <BotaoPrimario carregando={carregando} aoPressionar={() => void enviar()} titulo="Entrar" />
                         <Text style={estilos.rodape}>
@@ -132,4 +135,5 @@ const estilos = StyleSheet.create({
     ajuda: { color: cores.textoSecundario, fontSize: 15, marginTop: -8 },
     rodape: { color: cores.textoSecundario, fontSize: 14, textAlign: "center" },
     link: { color: cores.primaria, fontWeight: "700", textDecorationLine: "underline" },
+    esqueciSenha: { alignSelf: "flex-end", fontSize: 14, marginTop: -6 },
 });
